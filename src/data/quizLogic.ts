@@ -6,6 +6,21 @@ export type AnswerRecord = {
   isCorrect: boolean;
 };
 
+export type AnswerHistoryRecord = {
+  questionId: number;
+  isCorrect: boolean;
+  answeredAt: string;
+};
+
+export type QuestionOrder = 'random' | 'weakest' | 'stale' | 'least-answered';
+
+export const QUESTION_ORDERS: QuestionOrder[] = [
+  'random',
+  'weakest',
+  'stale',
+  'least-answered',
+];
+
 export type QuestionStat = {
   questionId: number;
   category: QuizCategory;
@@ -71,6 +86,89 @@ export function shuffleQuizSession(
   return shuffle(questions, random).map((question) =>
     shuffleQuestionOptions(question, random),
   );
+}
+
+export function shuffleQuestionOptionsForSession(
+  questions: QuizQuestion[],
+  random: () => number = Math.random,
+): QuizQuestion[] {
+  return questions.map((question) => shuffleQuestionOptions(question, random));
+}
+
+type QuestionOrderStat = {
+  attempts: number;
+  correct: number;
+  lastAnsweredAt: string;
+};
+
+// Empty string sorts before any ISO timestamp, so never-answered questions
+// are treated as the longest overdue.
+const NEVER_ANSWERED = '';
+
+export function orderQuestions(
+  questions: QuizQuestion[],
+  answers: AnswerHistoryRecord[],
+  order: QuestionOrder,
+  random: () => number = Math.random,
+): QuizQuestion[] {
+  if (order === 'random') {
+    return shuffle(questions, random);
+  }
+
+  const statsByQuestion = new Map<number, QuestionOrderStat>();
+  for (const answer of answers) {
+    const entry = statsByQuestion.get(answer.questionId) ?? {
+      attempts: 0,
+      correct: 0,
+      lastAnsweredAt: NEVER_ANSWERED,
+    };
+    entry.attempts += 1;
+    if (answer.isCorrect) {
+      entry.correct += 1;
+    }
+    if (answer.answeredAt > entry.lastAnsweredAt) {
+      entry.lastAnsweredAt = answer.answeredAt;
+    }
+    statsByQuestion.set(answer.questionId, entry);
+  }
+
+  const withStats = questions.map((question) => ({
+    question,
+    stat: statsByQuestion.get(question.id) ?? {
+      attempts: 0,
+      correct: 0,
+      lastAnsweredAt: NEVER_ANSWERED,
+    },
+  }));
+
+  switch (order) {
+    case 'weakest':
+      return withStats
+        .sort((a, b) => {
+          const accuracyA =
+            a.stat.attempts === 0
+              ? Number.POSITIVE_INFINITY
+              : a.stat.correct / a.stat.attempts;
+          const accuracyB =
+            b.stat.attempts === 0
+              ? Number.POSITIVE_INFINITY
+              : b.stat.correct / b.stat.attempts;
+          return accuracyA - accuracyB;
+        })
+        .map((item) => item.question);
+    case 'least-answered':
+      return withStats
+        .sort((a, b) => a.stat.attempts - b.stat.attempts)
+        .map((item) => item.question);
+    case 'stale':
+      return withStats
+        .sort((a, b) =>
+          a.stat.lastAnsweredAt.localeCompare(b.stat.lastAnsweredAt),
+        )
+        .map((item) => item.question);
+    default:
+      return questions;
+  }
 }
 
 export function getProgressPercent(

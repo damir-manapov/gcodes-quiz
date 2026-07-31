@@ -14,6 +14,11 @@ export const uiStrings = {
     appSubtitle:
       'Practice CNC programming fundamentals with local quiz questions.',
     languageLabel: 'Language',
+    orderLabel: 'Question order',
+    orderRandom: 'Random',
+    orderWeakest: 'Weakest first',
+    orderStale: 'Not answered in a while',
+    orderLeastAnswered: 'Least answered',
     viewStats: 'View stats',
     backToQuiz: 'Back to quiz',
     backupAnswers: 'Backup answers',
@@ -61,6 +66,11 @@ export const uiStrings = {
     appSubtitle:
       'Практикуйте основы программирования ЧПУ с локальными тестовыми вопросами.',
     languageLabel: 'Язык',
+    orderLabel: 'Порядок вопросов',
+    orderRandom: 'Случайный',
+    orderWeakest: 'Сначала слабые',
+    orderStale: 'Давно не отвечали',
+    orderLeastAnswered: 'Меньше всего ответов',
     viewStats: 'Статистика',
     backToQuiz: 'Вернуться к тесту',
     backupAnswers: 'Сохранить резервную копию',

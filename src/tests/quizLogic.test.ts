@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { QuizQuestion } from '../data/questions';
 import {
+  type AnswerHistoryRecord,
   computeOverallStats,
   computeQuestionStats,
   computeTopicStats,
   getNextQuestionIndex,
   getProgressPercent,
   isCorrectAnswer,
+  orderQuestions,
   shuffleQuizSession,
 } from '../data/quizLogic';
 
@@ -159,5 +161,61 @@ describe('stats computation', () => {
       questionsAttempted: 0,
       questionsTotal: 2,
     });
+  });
+});
+
+describe('orderQuestions', () => {
+  const question3: QuizQuestion = {
+    id: 3,
+    category: 'G',
+    topic: 'tool-change',
+    prompt: { en: 'Q3', ru: 'В3' },
+    options: [
+      { en: 'p', ru: 'п' },
+      { en: 'q', ru: 'к' },
+    ],
+    correctAnswer: 0,
+    explanation: { en: 'exp3', ru: 'оу3' },
+  };
+  const orderingQuestions = [...questions, question3];
+
+  it('keeps the same set of questions for a random order', () => {
+    const ordered = orderQuestions(orderingQuestions, [], 'random', () => 0);
+    expect(ordered.map((q) => q.id).sort()).toEqual(
+      orderingQuestions.map((q) => q.id).sort(),
+    );
+  });
+
+  it('orders by lowest accuracy first, with unattempted questions last', () => {
+    const answers: AnswerHistoryRecord[] = [
+      { questionId: 1, isCorrect: true, answeredAt: '2024-01-01T00:00:00Z' },
+      { questionId: 1, isCorrect: false, answeredAt: '2024-01-02T00:00:00Z' },
+      { questionId: 2, isCorrect: false, answeredAt: '2024-01-01T00:00:00Z' },
+    ];
+    const ordered = orderQuestions(orderingQuestions, answers, 'weakest');
+    expect(ordered.map((q) => q.id)).toEqual([2, 1, 3]);
+  });
+
+  it('orders by fewest attempts first', () => {
+    const answers: AnswerHistoryRecord[] = [
+      { questionId: 1, isCorrect: true, answeredAt: '2024-01-01T00:00:00Z' },
+      { questionId: 1, isCorrect: true, answeredAt: '2024-01-02T00:00:00Z' },
+      { questionId: 2, isCorrect: true, answeredAt: '2024-01-01T00:00:00Z' },
+    ];
+    const ordered = orderQuestions(
+      orderingQuestions,
+      answers,
+      'least-answered',
+    );
+    expect(ordered.map((q) => q.id)).toEqual([3, 2, 1]);
+  });
+
+  it('orders never-answered and long-untouched questions first', () => {
+    const answers: AnswerHistoryRecord[] = [
+      { questionId: 1, isCorrect: true, answeredAt: '2024-06-01T00:00:00Z' },
+      { questionId: 2, isCorrect: true, answeredAt: '2024-01-01T00:00:00Z' },
+    ];
+    const ordered = orderQuestions(orderingQuestions, answers, 'stale');
+    expect(ordered.map((q) => q.id)).toEqual([3, 2, 1]);
   });
 });

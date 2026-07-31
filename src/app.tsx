@@ -33,8 +33,11 @@ import {
   getNextQuestionIndex,
   getProgressPercent,
   isCorrectAnswer,
+  orderQuestions,
+  QUESTION_ORDERS,
+  type QuestionOrder,
   type QuestionStat,
-  shuffleQuizSession,
+  shuffleQuestionOptionsForSession,
 } from './data/quizLogic';
 import { LANGUAGES, type Language, localize, uiStrings } from './i18n';
 
@@ -54,6 +57,7 @@ export default function App() {
   const [isStatsLoading, setIsStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState<string | null>(null);
   const [language, setLanguageState] = useState<Language>('en');
+  const [questionOrder, setQuestionOrder] = useState<QuestionOrder>('random');
   const t = uiStrings[language];
 
   useEffect(() => {
@@ -79,15 +83,27 @@ export default function App() {
     });
   };
 
+  const orderLabels: Record<QuestionOrder, string> = {
+    random: t.orderRandom,
+    weakest: t.orderWeakest,
+    stale: t.orderStale,
+    'least-answered': t.orderLeastAnswered,
+  };
+
   const loadQuiz = useCallback(() => {
     let isMounted = true;
     setIsReady(false);
     setLoadError(null);
     initializeDatabase()
-      .then(() => getStoredQuestions())
-      .then((loadedQuestions) => {
+      .then(() => Promise.all([getStoredQuestions(), getStoredAnswers()]))
+      .then(([loadedQuestions, storedAnswers]) => {
         if (isMounted) {
-          setQuestions(shuffleQuizSession(loadedQuestions));
+          const ordered = orderQuestions(
+            loadedQuestions,
+            storedAnswers,
+            questionOrder,
+          );
+          setQuestions(shuffleQuestionOptionsForSession(ordered));
           setCurrentIndex(0);
           setSelectedAnswer(null);
           setScore(0);
@@ -105,7 +121,7 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, [language]);
+  }, [language, questionOrder]);
 
   useEffect(() => loadQuiz(), [loadQuiz]);
 
@@ -234,6 +250,7 @@ export default function App() {
           <Text style={styles.title}>{t.appTitle}</Text>
           <Text style={styles.subtitle}>{t.appSubtitle}</Text>
 
+          <Text style={styles.sectionLabel}>{t.languageLabel}</Text>
           <View style={styles.backupRow}>
             {LANGUAGES.map((lang) => (
               <TouchableOpacity
@@ -246,6 +263,24 @@ export default function App() {
               >
                 <Text style={styles.backupButtonText}>
                   {lang.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={styles.sectionLabel}>{t.orderLabel}</Text>
+          <View style={styles.actionRow}>
+            {QUESTION_ORDERS.map((order) => (
+              <TouchableOpacity
+                key={order}
+                style={[
+                  styles.actionButton,
+                  order === questionOrder ? styles.selectedOption : null,
+                ]}
+                onPress={() => setQuestionOrder(order)}
+              >
+                <Text style={styles.actionButtonText}>
+                  {orderLabels[order]}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -458,6 +493,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#475569',
     marginBottom: 20,
+  },
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748b',
+    marginBottom: 8,
   },
   backupRow: {
     flexDirection: 'row',
