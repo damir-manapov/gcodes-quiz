@@ -1,6 +1,13 @@
-import { useEffect, useMemo, useState, type ComponentProps } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { type ComponentProps, useEffect, useMemo, useState } from 'react';
+import {
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { getStoredQuestions, initializeDatabase } from './data/database';
 import type { QuizQuestion } from './data/questions';
 
@@ -70,16 +77,24 @@ export default function App() {
       <StatusBar style="dark" />
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>G-Code Quiz</Text>
-        <Text style={styles.subtitle}>Practice CNC programming fundamentals with local quiz questions.</Text>
+        <Text style={styles.subtitle}>
+          Practice CNC programming fundamentals with local quiz questions.
+        </Text>
 
         {!isReady ? (
-          <View style={styles.card}><Text style={styles.cardText}>Loading quiz questions...</Text></View>
+          <View style={styles.card}>
+            <Text style={styles.cardText}>Loading quiz questions...</Text>
+          </View>
         ) : questions.length === 0 ? (
-          <View style={styles.card}><Text style={styles.cardText}>No questions available.</Text></View>
+          <View style={styles.card}>
+            <Text style={styles.cardText}>No questions available.</Text>
+          </View>
         ) : currentQuestion ? (
           <>
             <View style={styles.headerRow}>
-              <Text style={styles.meta}>Question {currentIndex + 1} of {questions.length}</Text>
+              <Text style={styles.meta}>
+                Question {currentIndex + 1} of {questions.length}
+              </Text>
               <Text style={styles.meta}>Score {score}</Text>
             </View>
             <View style={styles.progressTrack}>
@@ -92,7 +107,9 @@ export default function App() {
                 const isCorrect = index === currentQuestion.correctAnswer;
                 const isSelected = index === selectedAnswer;
                 const buttonStyle = [styles.optionButton] as const;
-                const conditionalStyle = [] as Array<ComponentProps<typeof View>['style']>;
+                const conditionalStyle = [] as Array<
+                  ComponentProps<typeof View>['style']
+                >;
                 if (showAnswer && isCorrect) {
                   conditionalStyle.push(styles.correctOption);
                 }
@@ -121,8 +138,13 @@ export default function App() {
             {showAnswer ? (
               <View style={styles.feedbackCard}>
                 <Text style={styles.feedbackTitle}>Explanation</Text>
-                <Text style={styles.feedbackText}>{currentQuestion.explanation}</Text>
-                <TouchableOpacity style={styles.nextButton} onPress={nextQuestion}>
+                <Text style={styles.feedbackText}>
+                  {currentQuestion.explanation}
+                </Text>
+                <TouchableOpacity
+                  style={styles.nextButton}
+                  onPress={nextQuestion}
+                >
                   <Text style={styles.nextButtonText}>Next question</Text>
                 </TouchableOpacity>
               </View>

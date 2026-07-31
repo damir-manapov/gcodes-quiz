@@ -19,13 +19,21 @@ export async function initializeDatabase() {
     );
   `);
 
-  const existingCount = await db.getFirstAsync<{ count: number }>('SELECT COUNT(*) as count FROM questions');
+  const existingCount = await db.getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM questions',
+  );
   if (existingCount?.count === 0) {
     const questions = getQuestionsForQuiz();
     for (const question of questions) {
       await db.runAsync(
         'INSERT INTO questions (id, prompt, options, correctAnswer, explanation) VALUES (?, ?, ?, ?, ?)',
-        [question.id, question.prompt, JSON.stringify(question.options), question.correctAnswer, question.explanation],
+        [
+          question.id,
+          question.prompt,
+          JSON.stringify(question.options),
+          question.correctAnswer,
+          question.explanation,
+        ],
       );
     }
   }
@@ -35,7 +43,13 @@ export async function initializeDatabase() {
 
 export async function getStoredQuestions(): Promise<QuizQuestion[]> {
   const db = await initializeDatabase();
-  const rows = await db.getAllAsync<{ id: number; prompt: string; options: string; correctAnswer: number; explanation: string }>(
+  const rows = await db.getAllAsync<{
+    id: number;
+    prompt: string;
+    options: string;
+    correctAnswer: number;
+    explanation: string;
+  }>(
     'SELECT id, prompt, options, correctAnswer, explanation FROM questions ORDER BY id ASC',
   );
 

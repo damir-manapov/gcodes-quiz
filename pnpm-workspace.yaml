@@ -1,2 +1,6 @@
 allowBuilds:
   esbuild: true
+  simple-git-hooks: true
+
+overrides:
+  'uuid@<11.1.1': '>=11.1.1'

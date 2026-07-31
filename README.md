@@ -16,6 +16,7 @@ A React Native Expo app for practicing CNC G-code quiz questions offline with a 
 - Expo SQLite
 - pnpm
 - Vitest
+- Biome (lint/format)
 
 ## Getting Started
 
@@ -31,6 +32,12 @@ A React Native Expo app for practicing CNC G-code quiz questions offline with a 
    ```bash
    pnpm test
    ```
+
+## Checks
+
+- `bash check.sh` — format, lint, typecheck, tests
+- `bash health.sh` — secret scanning (requires [gitleaks](https://github.com/gitleaks/gitleaks) installed locally), dependency freshness, vulnerability audit
+- `bash all-checks.sh` — runs both; also runs automatically as a pre-commit hook
 
 ## Project Structure
 
