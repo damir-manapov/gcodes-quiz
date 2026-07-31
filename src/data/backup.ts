@@ -30,8 +30,12 @@ export async function exportAnswersToFile(): Promise<string> {
 }
 
 export async function importAnswersFromFile(): Promise<ImportResult> {
+  // Some share targets/cloud providers re-save exported backups with a
+  // non-json mime type (e.g. text/plain, application/octet-stream), which
+  // would hide the file from a strict 'application/json' filter. Accept any
+  // file here and rely on content validation (isAnswersBackup) instead.
   const result = await DocumentPicker.getDocumentAsync({
-    type: 'application/json',
+    type: '*/*',
     copyToCacheDirectory: true,
   });
 
@@ -45,7 +49,14 @@ export async function importAnswersFromFile(): Promise<ImportResult> {
   }
 
   const file = new File(asset.uri);
-  const content = await file.text();
+  let content: string;
+  try {
+    content = await file.text();
+  } catch (error) {
+    console.error('Failed to read backup file', asset.uri, error);
+    throw error;
+  }
+
   const backup = deserializeBackup(content);
   if (!backup) {
     return 'invalid';

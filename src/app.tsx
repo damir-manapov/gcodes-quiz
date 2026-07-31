@@ -161,7 +161,8 @@ export default function App() {
     try {
       await exportAnswersToFile();
       Alert.alert('Backup ready', 'Your answers were exported successfully.');
-    } catch {
+    } catch (error) {
+      console.error('Backup failed', error);
       Alert.alert(
         'Backup failed',
         'Could not export your answers. Please try again.',
@@ -189,7 +190,8 @@ export default function App() {
           'That file is not a valid answers backup.',
         );
       }
-    } catch {
+    } catch (error) {
+      console.error('Restore failed', error);
       Alert.alert(
         'Restore failed',
         'Could not import your answers. Please try again.',
