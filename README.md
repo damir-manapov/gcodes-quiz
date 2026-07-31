@@ -4,8 +4,10 @@ A React Native Expo app for practicing CNC G-code quiz questions offline with a 
 
 ## Features
 
-- Practice CNC quiz questions for common G and M codes
+- Practice 40+ quiz questions covering common G and M codes, tagged by category and topic
+- Questions and answer options are shuffled each session
 - Local in-app SQLite storage for questions and your answer history
+- Stats view showing overall accuracy, accuracy by topic, and your weakest questions
 - Backup your answer history to a JSON file and share/save it
 - Restore answers from a previously exported backup file
 - TypeScript-based Expo app
@@ -44,8 +46,9 @@ A React Native Expo app for practicing CNC G-code quiz questions offline with a 
 
 ## Project Structure
 
-- src/app.tsx — main quiz UI, including backup/restore actions
-- src/data/questions.ts — quiz question definitions
+- src/app.tsx — main quiz UI, including the stats view and backup/restore actions
+- src/data/questions.ts — quiz question definitions (with category/topic metadata)
+- src/data/quizLogic.ts — pure shuffle, progress, and stats computation logic (unit tested)
 - src/data/database.ts — local SQLite initialization, question loading, and answer persistence
 - src/data/backupFormat.ts — pure backup serialization/validation logic (unit tested)
 - src/data/backup.ts — file export/share and import/pick logic using Expo FileSystem, Sharing, and DocumentPicker

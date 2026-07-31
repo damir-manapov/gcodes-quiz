@@ -1,5 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
-import { type ComponentProps, useEffect, useMemo, useState } from 'react';
+import {
+  type ComponentProps,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import {
   Alert,
   ScrollView,
@@ -11,11 +17,23 @@ import {
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { exportAnswersToFile, importAnswersFromFile } from './data/backup';
 import {
+  getStoredAnswers,
   getStoredQuestions,
   initializeDatabase,
   recordAnswer,
 } from './data/database';
 import type { QuizQuestion } from './data/questions';
+import {
+  type AnswerRecord,
+  computeOverallStats,
+  computeQuestionStats,
+  computeTopicStats,
+  getNextQuestionIndex,
+  getProgressPercent,
+  isCorrectAnswer,
+  type QuestionStat,
+  shuffleQuizSession,
+} from './data/quizLogic';
 
 export default function App() {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -24,20 +42,34 @@ export default function App() {
   const [score, setScore] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isBackupBusy, setIsBackupBusy] = useState(false);
+  const [view, setView] = useState<'quiz' | 'stats'>('quiz');
+  const [answerRecords, setAnswerRecords] = useState<AnswerRecord[] | null>(
+    null,
+  );
+  const [isStatsLoading, setIsStatsLoading] = useState(false);
+  const [statsError, setStatsError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadQuiz = useCallback(() => {
     let isMounted = true;
+    setIsReady(false);
+    setLoadError(null);
     initializeDatabase()
       .then(() => getStoredQuestions())
       .then((loadedQuestions) => {
         if (isMounted) {
-          setQuestions(loadedQuestions);
+          setQuestions(shuffleQuizSession(loadedQuestions));
+          setCurrentIndex(0);
+          setSelectedAnswer(null);
+          setScore(0);
+          setShowAnswer(false);
           setIsReady(true);
         }
       })
       .catch(() => {
         if (isMounted) {
+          setLoadError('Could not load quiz questions. Please try again.');
           setIsReady(true);
         }
       });
@@ -47,13 +79,41 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => loadQuiz(), [loadQuiz]);
+
   const currentQuestion = questions[currentIndex] ?? null;
-  const progress = useMemo(() => {
-    if (questions.length === 0) {
-      return 0;
-    }
-    return ((currentIndex + 1) / questions.length) * 100;
-  }, [currentIndex, questions.length]);
+  const progress = useMemo(
+    () => getProgressPercent(currentIndex, questions.length),
+    [currentIndex, questions.length],
+  );
+
+  const questionStats = useMemo<QuestionStat[]>(
+    () => (answerRecords ? computeQuestionStats(questions, answerRecords) : []),
+    [questions, answerRecords],
+  );
+  const topicStats = useMemo(
+    () => computeTopicStats(questionStats),
+    [questionStats],
+  );
+  const overallStats = useMemo(
+    () =>
+      answerRecords ? computeOverallStats(questions, answerRecords) : null,
+    [questions, answerRecords],
+  );
+  const sortedQuestionStats = useMemo(() => {
+    return [...questionStats].sort((a, b) => {
+      if (a.attempts === 0 && b.attempts === 0) {
+        return 0;
+      }
+      if (a.attempts === 0) {
+        return 1;
+      }
+      if (b.attempts === 0) {
+        return -1;
+      }
+      return a.accuracy - b.accuracy;
+    });
+  }, [questionStats]);
 
   const submitAnswer = (answerIndex: number) => {
     if (showAnswer || !currentQuestion) {
@@ -61,13 +121,36 @@ export default function App() {
     }
     setSelectedAnswer(answerIndex);
     setShowAnswer(true);
-    const isCorrect = answerIndex === currentQuestion.correctAnswer;
+    const isCorrect = isCorrectAnswer(currentQuestion, answerIndex);
     if (isCorrect) {
       setScore((value) => value + 1);
     }
     recordAnswer(currentQuestion.id, answerIndex, isCorrect).catch(() => {
       // Ignore persistence failures; the in-session quiz state is unaffected.
     });
+  };
+
+  const openStats = async () => {
+    setView('stats');
+    setIsStatsLoading(true);
+    setStatsError(null);
+    try {
+      const storedAnswers = await getStoredAnswers();
+      setAnswerRecords(
+        storedAnswers.map((answer) => ({
+          questionId: answer.questionId,
+          isCorrect: answer.isCorrect,
+        })),
+      );
+    } catch {
+      setStatsError('Could not load your answer history.');
+    } finally {
+      setIsStatsLoading(false);
+    }
+  };
+
+  const closeStats = () => {
+    setView('quiz');
   };
 
   const handleBackup = async () => {
@@ -120,11 +203,7 @@ export default function App() {
     if (!currentQuestion) {
       return;
     }
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex((value) => value + 1);
-    } else {
-      setCurrentIndex(0);
-    }
+    setCurrentIndex(getNextQuestionIndex(currentIndex, questions.length));
     setSelectedAnswer(null);
     setShowAnswer(false);
   };
@@ -142,6 +221,15 @@ export default function App() {
           <View style={styles.backupRow}>
             <TouchableOpacity
               style={styles.backupButton}
+              onPress={view === 'quiz' ? openStats : closeStats}
+              disabled={!isReady}
+            >
+              <Text style={styles.backupButtonText}>
+                {view === 'quiz' ? 'View stats' : 'Back to quiz'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.backupButton}
               onPress={handleBackup}
               disabled={isBackupBusy}
             >
@@ -156,9 +244,81 @@ export default function App() {
             </TouchableOpacity>
           </View>
 
-          {!isReady ? (
+          {view === 'stats' ? (
+            isStatsLoading ? (
+              <View style={styles.card}>
+                <Text style={styles.cardText}>
+                  Loading your answer history...
+                </Text>
+              </View>
+            ) : statsError ? (
+              <View style={styles.card}>
+                <Text style={styles.cardText}>{statsError}</Text>
+              </View>
+            ) : overallStats ? (
+              <>
+                <View style={styles.card}>
+                  <Text style={styles.prompt}>Overall</Text>
+                  <Text style={styles.cardText}>
+                    {overallStats.totalCorrect}/{overallStats.totalAttempts}{' '}
+                    correct ({overallStats.accuracy}%) &middot;{' '}
+                    {overallStats.questionsAttempted}/
+                    {overallStats.questionsTotal} questions attempted
+                  </Text>
+                </View>
+
+                <View style={styles.card}>
+                  <Text style={styles.prompt}>By topic</Text>
+                  {topicStats.length === 0 ? (
+                    <Text style={styles.cardText}>
+                      No answers recorded yet.
+                    </Text>
+                  ) : (
+                    topicStats.map((stat) => (
+                      <View key={stat.topic} style={styles.statRow}>
+                        <Text style={styles.statLabel}>{stat.topic}</Text>
+                        <Text style={styles.statValue}>
+                          {stat.correct}/{stat.attempts} ({stat.accuracy}%)
+                        </Text>
+                      </View>
+                    ))
+                  )}
+                </View>
+
+                <View style={styles.card}>
+                  <Text style={styles.prompt}>Weakest questions</Text>
+                  {sortedQuestionStats.some((stat) => stat.attempts > 0) ? (
+                    sortedQuestionStats
+                      .filter((stat) => stat.attempts > 0)
+                      .slice(0, 10)
+                      .map((stat) => (
+                        <View key={stat.questionId} style={styles.statRow}>
+                          <Text style={styles.statLabel} numberOfLines={2}>
+                            {stat.prompt}
+                          </Text>
+                          <Text style={styles.statValue}>
+                            {stat.correct}/{stat.attempts} ({stat.accuracy}%)
+                          </Text>
+                        </View>
+                      ))
+                  ) : (
+                    <Text style={styles.cardText}>
+                      Answer some questions to see your weakest topics here.
+                    </Text>
+                  )}
+                </View>
+              </>
+            ) : null
+          ) : !isReady ? (
             <View style={styles.card}>
               <Text style={styles.cardText}>Loading quiz questions...</Text>
+            </View>
+          ) : loadError ? (
+            <View style={styles.card}>
+              <Text style={styles.cardText}>{loadError}</Text>
+              <TouchableOpacity style={styles.nextButton} onPress={loadQuiz}>
+                <Text style={styles.nextButtonText}>Retry</Text>
+              </TouchableOpacity>
             </View>
           ) : questions.length === 0 ? (
             <View style={styles.card}>
@@ -271,6 +431,21 @@ const styles = StyleSheet.create({
   backupButtonText: {
     color: '#2563eb',
     fontWeight: '600',
+  },
+  statRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  statLabel: {
+    flex: 1,
+    fontSize: 14,
+    color: '#334155',
+  },
+  statValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0f172a',
   },
   headerRow: {
     flexDirection: 'row',

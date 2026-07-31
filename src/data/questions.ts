@@ -1,5 +1,9 @@
+export type QuizCategory = 'G' | 'M';
+
 export type QuizQuestion = {
   id: number;
+  category: QuizCategory;
+  topic: string;
   prompt: string;
   options: string[];
   correctAnswer: number;
@@ -9,6 +13,8 @@ export type QuizQuestion = {
 export const quizQuestions: QuizQuestion[] = [
   {
     id: 1,
+    category: 'G',
+    topic: 'motion',
     prompt: 'What does G00 command do on a CNC machine?',
     options: [
       'Linear interpolation at feed rate',
@@ -21,6 +27,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 2,
+    category: 'G',
+    topic: 'motion',
     prompt: 'What does G01 command do?',
     options: [
       'Rapid traverse',
@@ -34,6 +42,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 3,
+    category: 'M',
+    topic: 'spindle',
     prompt: 'Which command typically stops the spindle?',
     options: ['M03', 'M05', 'G21', 'G17'],
     correctAnswer: 1,
@@ -41,6 +51,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 4,
+    category: 'G',
+    topic: 'units',
     prompt: 'What does G21 specify?',
     options: ['Inches', 'Millimeters', 'Radians', 'Degrees'],
     correctAnswer: 1,
@@ -49,6 +61,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 5,
+    category: 'G',
+    topic: 'positioning',
     prompt: 'Which coordinate system is commonly used in CNC programming?',
     options: ['Polar', 'Absolute', 'Relative only', 'Hexadecimal'],
     correctAnswer: 1,
@@ -57,6 +71,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 6,
+    category: 'M',
+    topic: 'spindle',
     prompt: 'What does M03 command do?',
     options: [
       'Turn spindle clockwise',
@@ -69,6 +85,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 7,
+    category: 'G',
+    topic: 'general',
     prompt: 'What is the purpose of a G code?',
     options: [
       'Defines tool geometry',
@@ -82,6 +100,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 8,
+    category: 'M',
+    topic: 'program-control',
     prompt: 'Which code is used to end a CNC program?',
     options: ['M02', 'M30', 'M06', 'G28'],
     correctAnswer: 1,
@@ -90,6 +110,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 9,
+    category: 'G',
+    topic: 'motion',
     prompt: 'What does G02 command in CNC programming?',
     options: [
       'Circular interpolation clockwise (CW)',
@@ -103,6 +125,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 10,
+    category: 'G',
+    topic: 'motion',
     prompt: 'What does G03 command?',
     options: [
       'Circular interpolation clockwise (CW)',
@@ -115,6 +139,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 11,
+    category: 'G',
+    topic: 'dwell',
     prompt: 'What is the function of G04?',
     options: [
       'Dwell (pause) for a specified time',
@@ -128,6 +154,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 12,
+    category: 'G',
+    topic: 'plane-selection',
     prompt: 'What does G17 select?',
     options: ['XY plane', 'ZX plane', 'YZ plane', 'Polar plane'],
     correctAnswer: 0,
@@ -136,6 +164,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 13,
+    category: 'G',
+    topic: 'plane-selection',
     prompt: 'What does G18 select?',
     options: ['XY plane', 'ZX plane', 'YZ plane', 'None of these'],
     correctAnswer: 1,
@@ -144,6 +174,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 14,
+    category: 'G',
+    topic: 'plane-selection',
     prompt: 'What does G19 select?',
     options: ['XY plane', 'ZX plane', 'YZ plane', 'Reference plane'],
     correctAnswer: 2,
@@ -151,6 +183,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 15,
+    category: 'G',
+    topic: 'units',
     prompt: 'What does G20 specify?',
     options: ['Millimeters', 'Inches', 'Radians', 'Feed per revolution'],
     correctAnswer: 1,
@@ -159,6 +193,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 16,
+    category: 'G',
+    topic: 'homing',
     prompt: 'What does G28 command a CNC machine to do?',
     options: [
       'Move to a work offset',
@@ -172,6 +208,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 17,
+    category: 'G',
+    topic: 'compensation',
     prompt: 'What does G40 do?',
     options: [
       'Activate cutter compensation left',
@@ -184,6 +222,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 18,
+    category: 'G',
+    topic: 'compensation',
     prompt: 'What does G41 activate?',
     options: [
       'Cutter compensation left',
@@ -197,6 +237,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 19,
+    category: 'G',
+    topic: 'compensation',
     prompt: 'What does G42 activate?',
     options: [
       'Cutter compensation left',
@@ -210,6 +252,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 20,
+    category: 'G',
+    topic: 'compensation',
     prompt: 'What does G43 apply?',
     options: [
       'Tool length compensation (positive)',
@@ -223,6 +267,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 21,
+    category: 'G',
+    topic: 'compensation',
     prompt: 'What does G49 do?',
     options: [
       'Apply tool length compensation',
@@ -235,6 +281,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 22,
+    category: 'G',
+    topic: 'work-offset',
     prompt: 'What is the purpose of G54 (through G59)?',
     options: [
       'Select a work coordinate system offset',
@@ -248,6 +296,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 23,
+    category: 'G',
+    topic: 'canned-cycle',
     prompt: 'What does G80 do?',
     options: [
       'Start a drilling canned cycle',
@@ -261,6 +311,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 24,
+    category: 'G',
+    topic: 'canned-cycle',
     prompt: 'What operation does G81 perform?',
     options: [
       'Simple drilling cycle',
@@ -274,6 +326,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 25,
+    category: 'G',
+    topic: 'canned-cycle',
     prompt: 'How does G82 differ from G81?',
     options: [
       'It adds a dwell at the bottom of the hole',
@@ -287,6 +341,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 26,
+    category: 'G',
+    topic: 'canned-cycle',
     prompt: 'What is G83 used for?',
     options: [
       'Peck drilling cycle for deep holes',
@@ -300,6 +356,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 27,
+    category: 'G',
+    topic: 'canned-cycle',
     prompt: 'What does G84 perform?',
     options: [
       'Reaming cycle',
@@ -313,6 +371,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 28,
+    category: 'G',
+    topic: 'positioning',
     prompt: 'What does G90 specify?',
     options: [
       'Incremental positioning',
@@ -326,6 +386,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 29,
+    category: 'G',
+    topic: 'positioning',
     prompt: 'What does G91 specify?',
     options: [
       'Absolute positioning',
@@ -339,6 +401,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 30,
+    category: 'G',
+    topic: 'feed-mode',
     prompt: 'What feed mode does G94 set?',
     options: [
       'Feed per revolution',
@@ -352,6 +416,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 31,
+    category: 'G',
+    topic: 'feed-mode',
     prompt: 'What feed mode does G95 set?',
     options: [
       'Feed per minute',
@@ -364,6 +430,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 32,
+    category: 'G',
+    topic: 'spindle',
     prompt: 'What does G96 activate on a CNC lathe?',
     options: [
       'Constant surface speed control',
@@ -377,6 +445,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 33,
+    category: 'G',
+    topic: 'spindle',
     prompt: 'What does G97 do?',
     options: [
       'Activate constant surface speed',
@@ -390,6 +460,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 34,
+    category: 'M',
+    topic: 'program-control',
     prompt: 'What does M00 do?',
     options: [
       'Optional program stop',
@@ -403,6 +475,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 35,
+    category: 'M',
+    topic: 'program-control',
     prompt: 'What does M01 do?',
     options: [
       'Optional stop, only if enabled on the control',
@@ -416,6 +490,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 36,
+    category: 'M',
+    topic: 'program-control',
     prompt: 'What does M02 do?',
     options: [
       'End the program without rewinding',
@@ -429,6 +505,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 37,
+    category: 'M',
+    topic: 'spindle',
     prompt: 'What does M04 command?',
     options: [
       'Spindle on clockwise',
@@ -441,6 +519,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 38,
+    category: 'M',
+    topic: 'tool-change',
     prompt: 'What does M06 command?',
     options: [
       'Coolant on',
@@ -454,6 +534,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 39,
+    category: 'M',
+    topic: 'coolant',
     prompt: 'What does M08 do?',
     options: [
       'Turn coolant on',
@@ -466,6 +548,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 40,
+    category: 'M',
+    topic: 'coolant',
     prompt: 'What does M09 do?',
     options: [
       'Turn coolant on',
@@ -478,6 +562,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 41,
+    category: 'M',
+    topic: 'subprogram',
     prompt: 'What does M98 do?',
     options: [
       'Call a subprogram',
@@ -491,6 +577,8 @@ export const quizQuestions: QuizQuestion[] = [
   },
   {
     id: 42,
+    category: 'M',
+    topic: 'subprogram',
     prompt: 'What does M99 do?',
     options: [
       'Call a subprogram',

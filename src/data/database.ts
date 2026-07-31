@@ -37,6 +37,12 @@ const MIGRATIONS: Array<(db: SQLite.SQLiteDatabase) => Promise<void>> = [
       CREATE INDEX IF NOT EXISTS idx_answers_answeredAt ON answers(answeredAt);
     `);
   },
+  async (db) => {
+    await db.execAsync(`
+      ALTER TABLE questions ADD COLUMN category TEXT NOT NULL DEFAULT 'G';
+      ALTER TABLE questions ADD COLUMN topic TEXT NOT NULL DEFAULT 'general';
+    `);
+  },
 ];
 
 async function runMigrations(db: SQLite.SQLiteDatabase): Promise<void> {
@@ -56,31 +62,48 @@ export async function openDatabase() {
   return SQLite.openDatabaseAsync(DB_NAME);
 }
 
-export async function initializeDatabase() {
-  const db = await openDatabase();
-  await runMigrations(db);
+// Cached so migrations and question seeding only run once per app session
+// instead of on every initializeDatabase() call (e.g. every recordAnswer()).
+let readyPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
-  const questions = getQuestionsForQuiz();
-  for (const question of questions) {
-    await db.runAsync(
-      `INSERT INTO questions (id, prompt, options, correctAnswer, explanation)
-       VALUES (?, ?, ?, ?, ?)
-       ON CONFLICT(id) DO UPDATE SET
-         prompt = excluded.prompt,
-         options = excluded.options,
-         correctAnswer = excluded.correctAnswer,
-         explanation = excluded.explanation`,
-      [
-        question.id,
-        question.prompt,
-        JSON.stringify(question.options),
-        question.correctAnswer,
-        question.explanation,
-      ],
-    );
+export async function initializeDatabase() {
+  if (!readyPromise) {
+    readyPromise = (async () => {
+      const db = await openDatabase();
+      await runMigrations(db);
+
+      const questions = getQuestionsForQuiz();
+      for (const question of questions) {
+        await db.runAsync(
+          `INSERT INTO questions (id, prompt, options, correctAnswer, explanation, category, topic)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(id) DO UPDATE SET
+             prompt = excluded.prompt,
+             options = excluded.options,
+             correctAnswer = excluded.correctAnswer,
+             explanation = excluded.explanation,
+             category = excluded.category,
+             topic = excluded.topic`,
+          [
+            question.id,
+            question.prompt,
+            JSON.stringify(question.options),
+            question.correctAnswer,
+            question.explanation,
+            question.category,
+            question.topic,
+          ],
+        );
+      }
+
+      return db;
+    })().catch((error) => {
+      readyPromise = null;
+      throw error;
+    });
   }
 
-  return db;
+  return readyPromise;
 }
 
 export async function getStoredQuestions(): Promise<QuizQuestion[]> {
@@ -91,8 +114,10 @@ export async function getStoredQuestions(): Promise<QuizQuestion[]> {
     options: string;
     correctAnswer: number;
     explanation: string;
+    category: 'G' | 'M';
+    topic: string;
   }>(
-    'SELECT id, prompt, options, correctAnswer, explanation FROM questions ORDER BY id ASC',
+    'SELECT id, prompt, options, correctAnswer, explanation, category, topic FROM questions ORDER BY id ASC',
   );
 
   return rows.map((row) => ({
@@ -101,6 +126,8 @@ export async function getStoredQuestions(): Promise<QuizQuestion[]> {
     options: JSON.parse(row.options) as string[],
     correctAnswer: row.correctAnswer,
     explanation: row.explanation,
+    category: row.category,
+    topic: row.topic,
   }));
 }
 
