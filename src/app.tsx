@@ -32,6 +32,7 @@ import {
   computeTopicStats,
   getNextQuestionIndex,
   getProgressPercent,
+  getQuestionCode,
   isCorrectAnswer,
   orderQuestions,
   QUESTION_ORDERS,
@@ -101,8 +102,6 @@ export default function App() {
 
   const changeQuizMode = (mode: QuizMode) => {
     setQuizMode(mode);
-    setSelectedAnswer(null);
-    setShowAnswer(false);
   };
 
   const loadQuiz = useCallback(() => {
@@ -118,7 +117,13 @@ export default function App() {
             storedAnswers,
             questionOrder,
           );
-          setQuestions(shuffleQuestionOptionsForSession(ordered));
+          // Reverse mode needs a single identifiable code per question, so
+          // drop the handful of purely conceptual questions that don't have one.
+          const eligible =
+            quizMode === 'reverse'
+              ? ordered.filter((question) => getQuestionCode(question) !== null)
+              : ordered;
+          setQuestions(shuffleQuestionOptionsForSession(eligible));
           setCurrentIndex(0);
           setSelectedAnswer(null);
           setScore(0);
@@ -136,7 +141,7 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, [language, questionOrder]);
+  }, [language, questionOrder, quizMode]);
 
   useEffect(() => loadQuiz(), [loadQuiz]);
 

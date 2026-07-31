@@ -52,6 +52,11 @@ const MIGRATIONS: Array<(db: SQLite.SQLiteDatabase) => Promise<void>> = [
       );
     `);
   },
+  async (db) => {
+    await db.execAsync(`
+      ALTER TABLE questions ADD COLUMN code TEXT;
+    `);
+  },
 ];
 
 async function runMigrations(db: SQLite.SQLiteDatabase): Promise<void> {
@@ -84,15 +89,16 @@ export async function initializeDatabase() {
       const questions = getQuestionsForQuiz();
       for (const question of questions) {
         await db.runAsync(
-          `INSERT INTO questions (id, prompt, options, correctAnswer, explanation, category, topic)
-           VALUES (?, ?, ?, ?, ?, ?, ?)
+          `INSERT INTO questions (id, prompt, options, correctAnswer, explanation, category, topic, code)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(id) DO UPDATE SET
              prompt = excluded.prompt,
              options = excluded.options,
              correctAnswer = excluded.correctAnswer,
              explanation = excluded.explanation,
              category = excluded.category,
-             topic = excluded.topic`,
+             topic = excluded.topic,
+             code = excluded.code`,
           [
             question.id,
             JSON.stringify(question.prompt),
@@ -101,6 +107,7 @@ export async function initializeDatabase() {
             JSON.stringify(question.explanation),
             question.category,
             question.topic,
+            question.code ?? null,
           ],
         );
       }
@@ -125,8 +132,9 @@ export async function getStoredQuestions(): Promise<QuizQuestion[]> {
     explanation: string;
     category: 'G' | 'M';
     topic: string;
+    code: string | null;
   }>(
-    'SELECT id, prompt, options, correctAnswer, explanation, category, topic FROM questions ORDER BY id ASC',
+    'SELECT id, prompt, options, correctAnswer, explanation, category, topic, code FROM questions ORDER BY id ASC',
   );
 
   return rows.map((row) => ({
@@ -137,6 +145,7 @@ export async function getStoredQuestions(): Promise<QuizQuestion[]> {
     explanation: JSON.parse(row.explanation) as LocalizedText,
     category: row.category,
     topic: row.topic,
+    ...(row.code ? { code: row.code } : {}),
   }));
 }
 
