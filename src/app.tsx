@@ -2,13 +2,13 @@ import { StatusBar } from 'expo-status-bar';
 import { type ComponentProps, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { exportAnswersToFile, importAnswersFromFile } from './data/backup';
 import {
   getStoredQuestions,
@@ -130,103 +130,107 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
-      <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.title}>G-Code Quiz</Text>
-        <Text style={styles.subtitle}>
-          Practice CNC programming fundamentals with local quiz questions.
-        </Text>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar style="dark" />
+        <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.title}>G-Code Quiz</Text>
+          <Text style={styles.subtitle}>
+            Practice CNC programming fundamentals with local quiz questions.
+          </Text>
 
-        <View style={styles.backupRow}>
-          <TouchableOpacity
-            style={styles.backupButton}
-            onPress={handleBackup}
-            disabled={isBackupBusy}
-          >
-            <Text style={styles.backupButtonText}>Backup answers</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.backupButton}
-            onPress={handleRestore}
-            disabled={isBackupBusy}
-          >
-            <Text style={styles.backupButtonText}>Restore answers</Text>
-          </TouchableOpacity>
-        </View>
-
-        {!isReady ? (
-          <View style={styles.card}>
-            <Text style={styles.cardText}>Loading quiz questions...</Text>
+          <View style={styles.backupRow}>
+            <TouchableOpacity
+              style={styles.backupButton}
+              onPress={handleBackup}
+              disabled={isBackupBusy}
+            >
+              <Text style={styles.backupButtonText}>Backup answers</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.backupButton}
+              onPress={handleRestore}
+              disabled={isBackupBusy}
+            >
+              <Text style={styles.backupButtonText}>Restore answers</Text>
+            </TouchableOpacity>
           </View>
-        ) : questions.length === 0 ? (
-          <View style={styles.card}>
-            <Text style={styles.cardText}>No questions available.</Text>
-          </View>
-        ) : currentQuestion ? (
-          <>
-            <View style={styles.headerRow}>
-              <Text style={styles.meta}>
-                Question {currentIndex + 1} of {questions.length}
-              </Text>
-              <Text style={styles.meta}>Score {score}</Text>
-            </View>
-            <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${progress}%` }]} />
-            </View>
 
+          {!isReady ? (
             <View style={styles.card}>
-              <Text style={styles.prompt}>{currentQuestion.prompt}</Text>
-              {currentQuestion.options.map((option, index) => {
-                const isCorrect = index === currentQuestion.correctAnswer;
-                const isSelected = index === selectedAnswer;
-                const buttonStyle = [styles.optionButton] as const;
-                const conditionalStyle = [] as Array<
-                  ComponentProps<typeof View>['style']
-                >;
-                if (showAnswer && isCorrect) {
-                  conditionalStyle.push(styles.correctOption);
-                }
-                if (showAnswer && isSelected && !isCorrect) {
-                  conditionalStyle.push(styles.wrongOption);
-                }
-                if (!showAnswer && isSelected) {
-                  conditionalStyle.push(styles.selectedOption);
-                }
-
-                const mergedStyle = [buttonStyle[0], ...conditionalStyle];
-
-                return (
-                  <TouchableOpacity
-                    key={option}
-                    style={mergedStyle}
-                    onPress={() => submitAnswer(index)}
-                    disabled={showAnswer}
-                  >
-                    <Text style={styles.optionText}>{option}</Text>
-                  </TouchableOpacity>
-                );
-              })}
+              <Text style={styles.cardText}>Loading quiz questions...</Text>
             </View>
-
-            {showAnswer ? (
-              <View style={styles.feedbackCard}>
-                <Text style={styles.feedbackTitle}>Explanation</Text>
-                <Text style={styles.feedbackText}>
-                  {currentQuestion.explanation}
+          ) : questions.length === 0 ? (
+            <View style={styles.card}>
+              <Text style={styles.cardText}>No questions available.</Text>
+            </View>
+          ) : currentQuestion ? (
+            <>
+              <View style={styles.headerRow}>
+                <Text style={styles.meta}>
+                  Question {currentIndex + 1} of {questions.length}
                 </Text>
-                <TouchableOpacity
-                  style={styles.nextButton}
-                  onPress={nextQuestion}
-                >
-                  <Text style={styles.nextButtonText}>Next question</Text>
-                </TouchableOpacity>
+                <Text style={styles.meta}>Score {score}</Text>
               </View>
-            ) : null}
-          </>
-        ) : null}
-      </ScrollView>
-    </SafeAreaView>
+              <View style={styles.progressTrack}>
+                <View
+                  style={[styles.progressFill, { width: `${progress}%` }]}
+                />
+              </View>
+
+              <View style={styles.card}>
+                <Text style={styles.prompt}>{currentQuestion.prompt}</Text>
+                {currentQuestion.options.map((option, index) => {
+                  const isCorrect = index === currentQuestion.correctAnswer;
+                  const isSelected = index === selectedAnswer;
+                  const buttonStyle = [styles.optionButton] as const;
+                  const conditionalStyle = [] as Array<
+                    ComponentProps<typeof View>['style']
+                  >;
+                  if (showAnswer && isCorrect) {
+                    conditionalStyle.push(styles.correctOption);
+                  }
+                  if (showAnswer && isSelected && !isCorrect) {
+                    conditionalStyle.push(styles.wrongOption);
+                  }
+                  if (!showAnswer && isSelected) {
+                    conditionalStyle.push(styles.selectedOption);
+                  }
+
+                  const mergedStyle = [buttonStyle[0], ...conditionalStyle];
+
+                  return (
+                    <TouchableOpacity
+                      key={option}
+                      style={mergedStyle}
+                      onPress={() => submitAnswer(index)}
+                      disabled={showAnswer}
+                    >
+                      <Text style={styles.optionText}>{option}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {showAnswer ? (
+                <View style={styles.feedbackCard}>
+                  <Text style={styles.feedbackTitle}>Explanation</Text>
+                  <Text style={styles.feedbackText}>
+                    {currentQuestion.explanation}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.nextButton}
+                    onPress={nextQuestion}
+                  >
+                    <Text style={styles.nextButtonText}>Next question</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
+            </>
+          ) : null}
+        </ScrollView>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
