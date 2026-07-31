@@ -14,46 +14,70 @@ export type StoredAnswer = {
 
 export type { AnswersBackup } from './backupFormat';
 
+// Append new steps here for future schema changes; never edit existing ones.
+const MIGRATIONS: Array<(db: SQLite.SQLiteDatabase) => Promise<void>> = [
+  async (db) => {
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS questions (
+        id INTEGER PRIMARY KEY NOT NULL,
+        prompt TEXT NOT NULL,
+        options TEXT NOT NULL,
+        correctAnswer INTEGER NOT NULL,
+        explanation TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS answers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        questionId INTEGER NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+        selectedAnswer INTEGER NOT NULL,
+        isCorrect INTEGER NOT NULL,
+        answeredAt TEXT NOT NULL,
+        UNIQUE (questionId, answeredAt)
+      );
+      CREATE INDEX IF NOT EXISTS idx_answers_questionId ON answers(questionId);
+      CREATE INDEX IF NOT EXISTS idx_answers_answeredAt ON answers(answeredAt);
+    `);
+  },
+];
+
+async function runMigrations(db: SQLite.SQLiteDatabase): Promise<void> {
+  await db.execAsync('PRAGMA foreign_keys = ON;');
+  const row = await db.getFirstAsync<{ user_version: number }>(
+    'PRAGMA user_version',
+  );
+  const startVersion = row?.user_version ?? 0;
+  const pendingMigrations = MIGRATIONS.slice(startVersion);
+  for (const [offset, migration] of pendingMigrations.entries()) {
+    await migration(db);
+    await db.execAsync(`PRAGMA user_version = ${startVersion + offset + 1};`);
+  }
+}
+
 export async function openDatabase() {
   return SQLite.openDatabaseAsync(DB_NAME);
 }
 
 export async function initializeDatabase() {
   const db = await openDatabase();
-  await db.execAsync(`
-    CREATE TABLE IF NOT EXISTS questions (
-      id INTEGER PRIMARY KEY NOT NULL,
-      prompt TEXT NOT NULL,
-      options TEXT NOT NULL,
-      correctAnswer INTEGER NOT NULL,
-      explanation TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS answers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-      questionId INTEGER NOT NULL,
-      selectedAnswer INTEGER NOT NULL,
-      isCorrect INTEGER NOT NULL,
-      answeredAt TEXT NOT NULL
-    );
-  `);
+  await runMigrations(db);
 
-  const existingCount = await db.getFirstAsync<{ count: number }>(
-    'SELECT COUNT(*) as count FROM questions',
-  );
-  if (existingCount?.count === 0) {
-    const questions = getQuestionsForQuiz();
-    for (const question of questions) {
-      await db.runAsync(
-        'INSERT INTO questions (id, prompt, options, correctAnswer, explanation) VALUES (?, ?, ?, ?, ?)',
-        [
-          question.id,
-          question.prompt,
-          JSON.stringify(question.options),
-          question.correctAnswer,
-          question.explanation,
-        ],
-      );
-    }
+  const questions = getQuestionsForQuiz();
+  for (const question of questions) {
+    await db.runAsync(
+      `INSERT INTO questions (id, prompt, options, correctAnswer, explanation)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(id) DO UPDATE SET
+         prompt = excluded.prompt,
+         options = excluded.options,
+         correctAnswer = excluded.correctAnswer,
+         explanation = excluded.explanation`,
+      [
+        question.id,
+        question.prompt,
+        JSON.stringify(question.options),
+        question.correctAnswer,
+        question.explanation,
+      ],
+    );
   }
 
   return db;
@@ -131,8 +155,10 @@ export async function importAnswersBackup(
 ): Promise<void> {
   const db = await initializeDatabase();
   for (const answer of backup.answers) {
+    // OR IGNORE skips rows that collide with the (questionId, answeredAt) unique
+    // constraint, so re-importing the same backup is a safe no-op.
     await db.runAsync(
-      'INSERT INTO answers (questionId, selectedAnswer, isCorrect, answeredAt) VALUES (?, ?, ?, ?)',
+      'INSERT OR IGNORE INTO answers (questionId, selectedAnswer, isCorrect, answeredAt) VALUES (?, ?, ?, ?)',
       [
         answer.questionId,
         answer.selectedAnswer,
