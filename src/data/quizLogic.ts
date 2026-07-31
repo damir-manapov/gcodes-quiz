@@ -12,6 +12,10 @@ export type AnswerHistoryRecord = {
   answeredAt: string;
 };
 
+export type QuizMode = 'forward' | 'reverse';
+
+export const QUIZ_MODES: QuizMode[] = ['forward', 'reverse'];
+
 export type QuestionOrder = 'random' | 'weakest' | 'stale' | 'least-answered';
 
 export const QUESTION_ORDERS: QuestionOrder[] = [
@@ -93,6 +97,63 @@ export function shuffleQuestionOptionsForSession(
   random: () => number = Math.random,
 ): QuizQuestion[] {
   return questions.map((question) => shuffleQuestionOptions(question, random));
+}
+
+const CODE_PATTERN = /\b([GM]\d{1,3}(?:\.\d)?)\b/g;
+
+// Returns the single G/M code a question is about, used to build the
+// "action -> code" reverse quiz mode. Falls back to scanning the English
+// prompt for exactly one code mention when `question.code` isn't set; returns
+// null when no single code can be determined (question is ineligible for
+// reverse mode).
+export function getQuestionCode(question: QuizQuestion): string | null {
+  if (question.code) {
+    return question.code;
+  }
+  const matches = Array.from(
+    question.prompt.en.matchAll(CODE_PATTERN),
+    (match) => match[1] as string,
+  );
+  const unique = new Set(matches);
+  return unique.size === 1 ? (matches[0] as string) : null;
+}
+
+// Turns a question into its reverse form: the prompt becomes the
+// description of the action (the original correct option's text) and the
+// options become G/M codes to choose from, drawn from `pool`. Returns the
+// question unchanged if it has no single identifiable code.
+export function toReverseQuestion(
+  question: QuizQuestion,
+  pool: QuizQuestion[],
+  random: () => number = Math.random,
+): QuizQuestion {
+  const code = getQuestionCode(question);
+  if (!code) {
+    return question;
+  }
+
+  const distractorPool = Array.from(
+    new Set(
+      pool
+        .map((candidate) => getQuestionCode(candidate))
+        .filter(
+          (candidate): candidate is string =>
+            candidate !== null && candidate !== code,
+        ),
+    ),
+  );
+  const distractors = shuffle(distractorPool, random).slice(0, 3);
+  const codeOptions = shuffle([code, ...distractors], random);
+  const correctAnswer = codeOptions.indexOf(code);
+  const description =
+    question.options[question.correctAnswer] ?? question.prompt;
+
+  return {
+    ...question,
+    prompt: description,
+    options: codeOptions.map((value) => ({ en: value, ru: value })),
+    correctAnswer,
+  };
 }
 
 type QuestionOrderStat = {

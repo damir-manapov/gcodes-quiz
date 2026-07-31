@@ -10,6 +10,10 @@ export type QuizQuestion = {
   options: LocalizedText[];
   correctAnswer: number;
   explanation: LocalizedText;
+  // The single G/M code this question is about, e.g. 'G54'. Only needed when
+  // the prompt doesn't mention exactly one code (ambiguous or code-less
+  // prompts); otherwise it's inferred from the prompt text at runtime.
+  code?: string;
 };
 
 export const quizQuestions: QuizQuestion[] = [
@@ -63,6 +67,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 3,
     category: 'M',
     topic: 'spindle',
+    code: 'M05',
     prompt: {
       en: 'Which command typically stops the spindle?',
       ru: 'Какая команда обычно останавливает шпиндель?',
@@ -172,6 +177,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 8,
     category: 'M',
     topic: 'program-control',
+    code: 'M30',
     prompt: {
       en: 'Which code is used to end a CNC program?',
       ru: 'Какой код используется для завершения программы ЧПУ?',
@@ -509,6 +515,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 22,
     category: 'G',
     topic: 'work-offset',
+    code: 'G54',
     prompt: {
       en: 'What is the purpose of G54 (through G59)?',
       ru: 'Какова цель команд G54 (по G59)?',
@@ -578,6 +585,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 25,
     category: 'G',
     topic: 'canned-cycle',
+    code: 'G82',
     prompt: {
       en: 'How does G82 differ from G81?',
       ru: 'Чем G82 отличается от G81?',
@@ -1142,6 +1150,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 49,
     category: 'G',
     topic: 'canned-cycle',
+    code: 'G73',
     prompt: {
       en: 'How does G73 (high-speed peck drilling) differ from G83?',
       ru: 'Чем G73 (высокоскоростное прерывистое сверление) отличается от G83?',

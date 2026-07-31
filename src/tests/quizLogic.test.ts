@@ -7,9 +7,11 @@ import {
   computeTopicStats,
   getNextQuestionIndex,
   getProgressPercent,
+  getQuestionCode,
   isCorrectAnswer,
   orderQuestions,
   shuffleQuizSession,
+  toReverseQuestion,
 } from '../data/quizLogic';
 
 const questions: QuizQuestion[] = [
@@ -217,5 +219,126 @@ describe('orderQuestions', () => {
     ];
     const ordered = orderQuestions(orderingQuestions, answers, 'stale');
     expect(ordered.map((q) => q.id)).toEqual([3, 2, 1]);
+  });
+});
+
+describe('getQuestionCode', () => {
+  it('uses the explicit code field when set', () => {
+    const question: QuizQuestion = {
+      id: 10,
+      category: 'M',
+      topic: 'spindle',
+      code: 'M05',
+      prompt: { en: 'Which command stops the spindle?', ru: 'В1' },
+      options: [{ en: 'M05', ru: 'M05' }],
+      correctAnswer: 0,
+      explanation: { en: 'exp', ru: 'оу' },
+    };
+    expect(getQuestionCode(question)).toBe('M05');
+  });
+
+  it('infers the code from a prompt mentioning exactly one code', () => {
+    const question: QuizQuestion = {
+      id: 11,
+      category: 'G',
+      topic: 'motion',
+      prompt: { en: 'What does G00 command do?', ru: 'В1' },
+      options: [{ en: 'Rapid move', ru: 'а' }],
+      correctAnswer: 0,
+      explanation: { en: 'exp', ru: 'оу' },
+    };
+    expect(getQuestionCode(question)).toBe('G00');
+  });
+
+  it('returns null when the prompt has no code or more than one code', () => {
+    const noCode: QuizQuestion = {
+      id: 12,
+      category: 'G',
+      topic: 'general',
+      prompt: { en: 'What is the purpose of a G code?', ru: 'В1' },
+      options: [{ en: 'a', ru: 'а' }],
+      correctAnswer: 0,
+      explanation: { en: 'exp', ru: 'оу' },
+    };
+    const twoCodes: QuizQuestion = {
+      id: 13,
+      category: 'G',
+      topic: 'canned-cycle',
+      prompt: { en: 'How does G82 differ from G81?', ru: 'В1' },
+      options: [{ en: 'a', ru: 'а' }],
+      correctAnswer: 0,
+      explanation: { en: 'exp', ru: 'оу' },
+    };
+    expect(getQuestionCode(noCode)).toBeNull();
+    expect(getQuestionCode(twoCodes)).toBeNull();
+  });
+});
+
+describe('toReverseQuestion', () => {
+  const pool: QuizQuestion[] = [
+    {
+      id: 20,
+      category: 'G',
+      topic: 'motion',
+      prompt: { en: 'What does G00 command do?', ru: 'В1' },
+      options: [
+        { en: 'Rapid positioning move', ru: 'а' },
+        { en: 'Linear interpolation', ru: 'б' },
+      ],
+      correctAnswer: 0,
+      explanation: { en: 'exp', ru: 'оу' },
+    },
+    {
+      id: 21,
+      category: 'G',
+      topic: 'motion',
+      prompt: { en: 'What does G01 command do?', ru: 'В2' },
+      options: [{ en: 'Linear interpolation', ru: 'б' }],
+      correctAnswer: 0,
+      explanation: { en: 'exp', ru: 'оу' },
+    },
+    {
+      id: 22,
+      category: 'M',
+      topic: 'spindle',
+      prompt: { en: 'What does M03 command do?', ru: 'В3' },
+      options: [{ en: 'Spindle clockwise', ru: 'в' }],
+      correctAnswer: 0,
+      explanation: { en: 'exp', ru: 'оу' },
+    },
+  ];
+
+  it('swaps the prompt for the description and the options for codes', () => {
+    const target = pool[0] as QuizQuestion;
+    const reversed = toReverseQuestion(target, pool, () => 0);
+    expect(reversed.prompt).toEqual({
+      en: 'Rapid positioning move',
+      ru: 'а',
+    });
+    expect(reversed.options.map((option) => option.en)).toEqual(
+      expect.arrayContaining(['G00']),
+    );
+    expect(reversed.options[reversed.correctAnswer]?.en).toBe('G00');
+  });
+
+  it('draws distractor codes from other questions in the pool', () => {
+    const target = pool[0] as QuizQuestion;
+    const reversed = toReverseQuestion(target, pool, () => 0);
+    const codes = reversed.options.map((option) => option.en);
+    expect(codes).toContain('G01');
+    expect(codes).toContain('M03');
+  });
+
+  it('returns the question unchanged when no single code can be found', () => {
+    const conceptual: QuizQuestion = {
+      id: 23,
+      category: 'G',
+      topic: 'general',
+      prompt: { en: 'What is the purpose of a G code?', ru: 'В1' },
+      options: [{ en: 'a', ru: 'а' }],
+      correctAnswer: 0,
+      explanation: { en: 'exp', ru: 'оу' },
+    };
+    expect(toReverseQuestion(conceptual, pool)).toBe(conceptual);
   });
 });

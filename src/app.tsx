@@ -35,9 +35,12 @@ import {
   isCorrectAnswer,
   orderQuestions,
   QUESTION_ORDERS,
+  QUIZ_MODES,
   type QuestionOrder,
   type QuestionStat,
+  type QuizMode,
   shuffleQuestionOptionsForSession,
+  toReverseQuestion,
 } from './data/quizLogic';
 import { LANGUAGES, type Language, localize, uiStrings } from './i18n';
 
@@ -58,6 +61,7 @@ export default function App() {
   const [statsError, setStatsError] = useState<string | null>(null);
   const [language, setLanguageState] = useState<Language>('en');
   const [questionOrder, setQuestionOrder] = useState<QuestionOrder>('random');
+  const [quizMode, setQuizMode] = useState<QuizMode>('forward');
   const t = uiStrings[language];
 
   useEffect(() => {
@@ -88,6 +92,17 @@ export default function App() {
     weakest: t.orderWeakest,
     stale: t.orderStale,
     'least-answered': t.orderLeastAnswered,
+  };
+
+  const modeLabels: Record<QuizMode, string> = {
+    forward: t.modeForward,
+    reverse: t.modeReverse,
+  };
+
+  const changeQuizMode = (mode: QuizMode) => {
+    setQuizMode(mode);
+    setSelectedAnswer(null);
+    setShowAnswer(false);
   };
 
   const loadQuiz = useCallback(() => {
@@ -126,6 +141,13 @@ export default function App() {
   useEffect(() => loadQuiz(), [loadQuiz]);
 
   const currentQuestion = questions[currentIndex] ?? null;
+  const displayQuestion = useMemo(
+    () =>
+      currentQuestion && quizMode === 'reverse'
+        ? toReverseQuestion(currentQuestion, questions)
+        : currentQuestion,
+    [currentQuestion, quizMode, questions],
+  );
   const progress = useMemo(
     () => getProgressPercent(currentIndex, questions.length),
     [currentIndex, questions.length],
@@ -160,16 +182,16 @@ export default function App() {
   }, [questionStats]);
 
   const submitAnswer = (answerIndex: number) => {
-    if (showAnswer || !currentQuestion) {
+    if (showAnswer || !displayQuestion) {
       return;
     }
     setSelectedAnswer(answerIndex);
     setShowAnswer(true);
-    const isCorrect = isCorrectAnswer(currentQuestion, answerIndex);
+    const isCorrect = isCorrectAnswer(displayQuestion, answerIndex);
     if (isCorrect) {
       setScore((value) => value + 1);
     }
-    recordAnswer(currentQuestion.id, answerIndex, isCorrect).catch(() => {
+    recordAnswer(displayQuestion.id, answerIndex, isCorrect).catch(() => {
       // Ignore persistence failures; the in-session quiz state is unaffected.
     });
   };
@@ -264,6 +286,22 @@ export default function App() {
                 <Text style={styles.backupButtonText}>
                   {lang.toUpperCase()}
                 </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text style={styles.sectionLabel}>{t.modeLabel}</Text>
+          <View style={styles.actionRow}>
+            {QUIZ_MODES.map((mode) => (
+              <TouchableOpacity
+                key={mode}
+                style={[
+                  styles.actionButton,
+                  mode === quizMode ? styles.selectedOption : null,
+                ]}
+                onPress={() => changeQuizMode(mode)}
+              >
+                <Text style={styles.actionButtonText}>{modeLabels[mode]}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -398,74 +436,86 @@ export default function App() {
               <Text style={styles.cardText}>{t.noQuestionsAvailable}</Text>
             </View>
           ) : currentQuestion ? (
-            <>
-              <View style={styles.headerRow}>
-                <Text style={styles.meta}>
-                  {t.questionProgress(currentIndex + 1, questions.length)}
-                </Text>
-                <Text style={styles.meta}>{t.score(score)}</Text>
-              </View>
-              <View style={styles.progressTrack}>
-                <View
-                  style={[styles.progressFill, { width: `${progress}%` }]}
-                />
-              </View>
+            (() => {
+              const question = displayQuestion ?? currentQuestion;
+              return (
+                <>
+                  <View style={styles.headerRow}>
+                    <Text style={styles.meta}>
+                      {t.questionProgress(currentIndex + 1, questions.length)}
+                    </Text>
+                    <Text style={styles.meta}>{t.score(score)}</Text>
+                  </View>
+                  <View style={styles.progressTrack}>
+                    <View
+                      style={[styles.progressFill, { width: `${progress}%` }]}
+                    />
+                  </View>
 
-              <View style={styles.card}>
-                <Text style={styles.prompt}>
-                  {localize(currentQuestion.prompt, language)}
-                </Text>
-                {currentQuestion.options.map((option, index) => {
-                  const isCorrect = index === currentQuestion.correctAnswer;
-                  const isSelected = index === selectedAnswer;
-                  const buttonStyle = [styles.optionButton] as const;
-                  const conditionalStyle = [] as Array<
-                    ComponentProps<typeof View>['style']
-                  >;
-                  if (showAnswer && isCorrect) {
-                    conditionalStyle.push(styles.correctOption);
-                  }
-                  if (showAnswer && isSelected && !isCorrect) {
-                    conditionalStyle.push(styles.wrongOption);
-                  }
-                  if (!showAnswer && isSelected) {
-                    conditionalStyle.push(styles.selectedOption);
-                  }
-
-                  const mergedStyle = [buttonStyle[0], ...conditionalStyle];
-
-                  return (
-                    <TouchableOpacity
-                      key={option.en}
-                      style={mergedStyle}
-                      onPress={() => submitAnswer(index)}
-                      disabled={showAnswer}
-                    >
-                      <Text style={styles.optionText}>
-                        {localize(option, language)}
+                  <View style={styles.card}>
+                    {quizMode === 'reverse' ? (
+                      <Text style={styles.sectionLabel}>
+                        {t.reverseQuestionHint}
                       </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+                    ) : null}
+                    <Text style={styles.prompt}>
+                      {localize(question.prompt, language)}
+                    </Text>
+                    {question.options.map((option, index) => {
+                      const isCorrect = index === question.correctAnswer;
+                      const isSelected = index === selectedAnswer;
+                      const buttonStyle = [styles.optionButton] as const;
+                      const conditionalStyle = [] as Array<
+                        ComponentProps<typeof View>['style']
+                      >;
+                      if (showAnswer && isCorrect) {
+                        conditionalStyle.push(styles.correctOption);
+                      }
+                      if (showAnswer && isSelected && !isCorrect) {
+                        conditionalStyle.push(styles.wrongOption);
+                      }
+                      if (!showAnswer && isSelected) {
+                        conditionalStyle.push(styles.selectedOption);
+                      }
 
-              {showAnswer ? (
-                <View style={styles.feedbackCard}>
-                  <Text style={styles.feedbackTitle}>
-                    {t.explanationHeading}
-                  </Text>
-                  <Text style={styles.feedbackText}>
-                    {localize(currentQuestion.explanation, language)}
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.nextButton}
-                    onPress={nextQuestion}
-                  >
-                    <Text style={styles.nextButtonText}>{t.nextQuestion}</Text>
-                  </TouchableOpacity>
-                </View>
-              ) : null}
-            </>
+                      const mergedStyle = [buttonStyle[0], ...conditionalStyle];
+
+                      return (
+                        <TouchableOpacity
+                          key={option.en}
+                          style={mergedStyle}
+                          onPress={() => submitAnswer(index)}
+                          disabled={showAnswer}
+                        >
+                          <Text style={styles.optionText}>
+                            {localize(option, language)}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+
+                  {showAnswer ? (
+                    <View style={styles.feedbackCard}>
+                      <Text style={styles.feedbackTitle}>
+                        {t.explanationHeading}
+                      </Text>
+                      <Text style={styles.feedbackText}>
+                        {localize(currentQuestion.explanation, language)}
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.nextButton}
+                        onPress={nextQuestion}
+                      >
+                        <Text style={styles.nextButtonText}>
+                          {t.nextQuestion}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : null}
+                </>
+              );
+            })()
           ) : null}
         </ScrollView>
       </SafeAreaView>
