@@ -22,6 +22,12 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-sharing"]
+    "plugins": ["expo-sharing"],
+    "extra": {
+      "eas": {
+        "projectId": "77297a12-da08-4758-bc5e-d0c12745a449"
+      }
+    },
+    "owner": "mkven"
   }
 }

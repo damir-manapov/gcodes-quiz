@@ -251,29 +251,29 @@ export default function App() {
             ))}
           </View>
 
-          <View style={styles.backupRow}>
+          <View style={styles.actionRow}>
             <TouchableOpacity
-              style={styles.backupButton}
+              style={styles.actionButton}
               onPress={view === 'quiz' ? openStats : closeStats}
               disabled={!isReady}
             >
-              <Text style={styles.backupButtonText}>
+              <Text style={styles.actionButtonText}>
                 {view === 'quiz' ? t.viewStats : t.backToQuiz}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.backupButton}
+              style={styles.actionButton}
               onPress={handleBackup}
               disabled={isBackupBusy}
             >
-              <Text style={styles.backupButtonText}>{t.backupAnswers}</Text>
+              <Text style={styles.actionButtonText}>{t.backupAnswers}</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.backupButton}
+              style={styles.actionButton}
               onPress={handleRestore}
               disabled={isBackupBusy}
             >
-              <Text style={styles.backupButtonText}>{t.restoreAnswers}</Text>
+              <Text style={styles.actionButtonText}>{t.restoreAnswers}</Text>
             </TouchableOpacity>
           </View>
 
@@ -475,6 +475,28 @@ const styles = StyleSheet.create({
   backupButtonText: {
     color: '#2563eb',
     fontWeight: '600',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 20,
+  },
+  actionButton: {
+    flexGrow: 1,
+    minWidth: '30%',
+    borderWidth: 1,
+    borderColor: '#2563eb',
+    borderRadius: 999,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+  },
+  actionButtonText: {
+    color: '#2563eb',
+    fontWeight: '600',
+    fontSize: 13,
+    textAlign: 'center',
   },
   statRow: {
     flexDirection: 'row',
