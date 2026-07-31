@@ -6,7 +6,6 @@
   "main": "index.ts",
   "dependencies": {
     "expo": "~57.0.9",
-    "expo-document-picker": "~57.0.1",
     "expo-file-system": "~57.0.1",
     "expo-sharing": "~57.0.8",
     "expo-sqlite": "~57.0.1",

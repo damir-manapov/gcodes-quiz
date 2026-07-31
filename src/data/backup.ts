@@ -1,4 +1,3 @@
-import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import {
@@ -30,30 +29,21 @@ export async function exportAnswersToFile(): Promise<string> {
 }
 
 export async function importAnswersFromFile(): Promise<ImportResult> {
-  // Some share targets/cloud providers re-save exported backups with a
-  // non-json mime type (e.g. text/plain, application/octet-stream), which
-  // would hide the file from a strict 'application/json' filter. Accept any
-  // file here and rely on content validation (isAnswersBackup) instead.
-  const result = await DocumentPicker.getDocumentAsync({
-    type: '*/*',
-    copyToCacheDirectory: true,
-  });
-
-  if (result.canceled) {
+  // Use expo-file-system's own picker (not expo-document-picker): files it
+  // returns are granted read permission through its permission tracking,
+  // whereas files copied by expo-document-picker are not and fail to read
+  // with a "Missing 'READ' permission" error.
+  const picked = await File.pickFileAsync({ mimeTypes: '*/*' });
+  if (picked.canceled) {
     return 'canceled';
   }
 
-  const asset = result.assets[0];
-  if (!asset) {
-    return 'canceled';
-  }
-
-  const file = new File(asset.uri);
+  const file = picked.result;
   let content: string;
   try {
     content = await file.text();
   } catch (error) {
-    console.error('Failed to read backup file', asset.uri, error);
+    console.error('Failed to read backup file', file.uri, error);
     throw error;
   }
 
