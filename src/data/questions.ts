@@ -979,6 +979,486 @@ export const quizQuestions: QuizQuestion[] = [
       ru: 'M99 возвращает управление из подпрограммы в вызывающую программу или переходит в начало основной программы.',
     },
   },
+  {
+    id: 43,
+    category: 'G',
+    topic: 'work-offset',
+    prompt: {
+      en: 'What does G53 do?',
+      ru: 'Что делает G53?',
+    },
+    options: [
+      {
+        en: 'Move using the machine coordinate system for one block',
+        ru: 'Выполнить перемещение в системе координат станка для одного кадра',
+      },
+      { en: 'Select work offset G54', ru: 'Выбрать смещение G54' },
+      {
+        en: 'Set a local coordinate system',
+        ru: 'Задать локальную систему координат',
+      },
+      {
+        en: 'Cancel tool length compensation',
+        ru: 'Отменить коррекцию на длину инструмента',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G53 is a non-modal command that positions the machine using the machine coordinate system, ignoring any active work offset, for the block it appears in.',
+      ru: 'G53 — немодальная команда, задающая перемещение в системе координат станка, игнорируя активное смещение, только для кадра, в котором она указана.',
+    },
+  },
+  {
+    id: 44,
+    category: 'G',
+    topic: 'work-offset',
+    prompt: {
+      en: 'What does G52 set up?',
+      ru: 'Что настраивает G52?',
+    },
+    options: [
+      {
+        en: 'A local coordinate system offset from the current work offset',
+        ru: 'Локальную систему координат со смещением от текущего рабочего смещения',
+      },
+      { en: 'The machine coordinate system', ru: 'Систему координат станка' },
+      { en: 'A canned drilling cycle', ru: 'Постоянный цикл сверления' },
+      { en: 'Coordinate rotation', ru: 'Поворот системы координат' },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G52 defines a local coordinate system offset from the active work coordinate system, useful for programming a feature at a convenient local origin.',
+      ru: 'G52 задаёт локальную систему координат со смещением от активной рабочей системы координат — удобно для программирования элемента относительно локального начала отсчёта.',
+    },
+  },
+  {
+    id: 45,
+    category: 'G',
+    topic: 'motion',
+    prompt: {
+      en: 'What does G61 (exact stop check) do?',
+      ru: 'Что делает G61 (точная остановка)?',
+    },
+    options: [
+      {
+        en: 'Decelerates to a full stop at the end of each block before moving to the next',
+        ru: 'Замедляет движение до полной остановки в конце каждого кадра перед переходом к следующему',
+      },
+      {
+        en: 'Blends corners for smoother continuous motion',
+        ru: 'Сглаживает углы для более плавного непрерывного движения',
+      },
+      {
+        en: 'Rounds sharp corners automatically',
+        ru: 'Автоматически скругляет острые углы',
+      },
+      {
+        en: 'Increases feed rate at corners',
+        ru: 'Увеличивает подачу на углах',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G61 sets exact stop check mode, causing the machine to decelerate to a complete stop at the end of every block for precise cornering, at the cost of cycle time.',
+      ru: 'G61 включает режим точной остановки: станок полностью останавливается в конце каждого кадра для точного прохождения углов, но это увеличивает время цикла.',
+    },
+  },
+  {
+    id: 46,
+    category: 'G',
+    topic: 'motion',
+    prompt: {
+      en: 'What does G64 do?',
+      ru: 'Что делает G64?',
+    },
+    options: [
+      {
+        en: 'Cancels exact stop check and enables continuous cutting mode',
+        ru: 'Отменяет точную остановку и включает режим непрерывной обработки',
+      },
+      { en: 'Enables exact stop check', ru: 'Включает точную остановку' },
+      { en: 'Selects a canned cycle', ru: 'Выбирает постоянный цикл' },
+      {
+        en: 'Sets the local coordinate system',
+        ru: 'Задаёт локальную систему координат',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G64 cancels G61 exact stop check and returns to continuous (cutting) mode, letting the control blend moves for smoother, faster motion.',
+      ru: 'G64 отменяет режим точной остановки G61 и возвращает непрерывный режим обработки, позволяя ЧПУ сглаживать переходы для более плавного и быстрого движения.',
+    },
+  },
+  {
+    id: 47,
+    category: 'G',
+    topic: 'coordinate-system',
+    prompt: {
+      en: 'What does G68 activate?',
+      ru: 'Что включает G68?',
+    },
+    options: [
+      { en: 'Coordinate system rotation', ru: 'Поворот системы координат' },
+      {
+        en: 'Scaling of programmed dimensions',
+        ru: 'Масштабирование программируемых размеров',
+      },
+      { en: 'Mirror imaging', ru: 'Зеркальное отображение' },
+      { en: 'Tool length compensation', ru: 'Коррекцию на длину инструмента' },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G68 activates coordinate system rotation, letting a program run at a specified angle around a defined center point.',
+      ru: 'G68 включает поворот системы координат, позволяя выполнить программу под заданным углом вокруг указанного центра.',
+    },
+  },
+  {
+    id: 48,
+    category: 'G',
+    topic: 'coordinate-system',
+    prompt: {
+      en: 'What does G69 do?',
+      ru: 'Что делает G69?',
+    },
+    options: [
+      {
+        en: 'Cancels coordinate system rotation (G68)',
+        ru: 'Отменяет поворот системы координат (G68)',
+      },
+      {
+        en: 'Starts coordinate system rotation',
+        ru: 'Включает поворот системы координат',
+      },
+      { en: 'Cancels canned cycles', ru: 'Отменяет постоянные циклы' },
+      { en: 'Selects a work offset', ru: 'Выбирает рабочее смещение' },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G69 cancels the coordinate system rotation activated by G68, returning the program to the unrotated coordinate system.',
+      ru: 'G69 отменяет поворот системы координат, включённый командой G68, возвращая программу к неповёрнутой системе координат.',
+    },
+  },
+  {
+    id: 49,
+    category: 'G',
+    topic: 'canned-cycle',
+    prompt: {
+      en: 'How does G73 (high-speed peck drilling) differ from G83?',
+      ru: 'Чем G73 (высокоскоростное прерывистое сверление) отличается от G83?',
+    },
+    options: [
+      {
+        en: 'It only retracts a small clearance amount between pecks instead of fully out of the hole',
+        ru: 'Отвод между проходами небольшой, а не полный вывод из отверстия',
+      },
+      {
+        en: 'It synchronizes feed with spindle rotation like tapping',
+        ru: 'Синхронизирует подачу с вращением шпинделя, как при нарезании резьбы',
+      },
+      {
+        en: 'It cuts threads instead of drilling',
+        ru: 'Нарезает резьбу вместо сверления',
+      },
+      {
+        en: 'It requires no dwell or retract at all',
+        ru: 'Не требует выдержки или отвода вообще',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G73 is a high-speed peck drilling cycle that retracts only a small amount to break chips between pecks, unlike G83 which fully retracts out of the hole.',
+      ru: 'G73 — цикл высокоскоростного прерывистого сверления, при котором между проходами выполняется небольшой отвод для дробления стружки, в отличие от G83, где отвод полный.',
+    },
+  },
+  {
+    id: 50,
+    category: 'G',
+    topic: 'canned-cycle',
+    prompt: {
+      en: 'What is G74 used for?',
+      ru: 'Для чего используется G74?',
+    },
+    options: [
+      {
+        en: 'Left-hand (reverse) tapping cycle',
+        ru: 'Цикл нарезания левой резьбы',
+      },
+      { en: 'Right-hand tapping cycle', ru: 'Цикл нарезания правой резьбы' },
+      { en: 'Boring cycle', ru: 'Цикл растачивания' },
+      { en: 'Peck drilling cycle', ru: 'Цикл прерывистого сверления' },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G74 is a canned cycle for left-hand tapping, spinning the spindle counterclockwise while feeding in and reversing to back out.',
+      ru: 'G74 — постоянный цикл нарезания левой резьбы: шпиндель вращается против часовой стрелки при входе и меняет направление при выходе.',
+    },
+  },
+  {
+    id: 51,
+    category: 'G',
+    topic: 'canned-cycle',
+    prompt: {
+      en: 'What does the G76 fine boring cycle add compared to a basic boring cycle?',
+      ru: 'Что добавляет цикл точного растачивания G76 по сравнению с базовым циклом растачивания?',
+    },
+    options: [
+      {
+        en: 'It orients the spindle and shifts the tool away from the wall before retracting to avoid marking the finished bore',
+        ru: 'Ориентирует шпиндель и отводит инструмент от стенки перед отводом, чтобы не оставить след на обработанной поверхности',
+      },
+      {
+        en: 'It taps threads instead of boring',
+        ru: 'Нарезает резьбу вместо растачивания',
+      },
+      {
+        en: 'It only works in rapid traverse',
+        ru: 'Работает только на быстром ходу',
+      },
+      {
+        en: 'It requires no spindle rotation',
+        ru: 'Не требует вращения шпинделя',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G76 performs fine boring: at the bottom of the hole the spindle orients to a fixed angle and the tool shifts away from the bore wall before retracting, leaving a clean finish.',
+      ru: 'G76 выполняет точное растачивание: на дне отверстия шпиндель ориентируется под фиксированным углом, инструмент отводится от стенки перед выходом, обеспечивая чистую поверхность.',
+    },
+  },
+  {
+    id: 52,
+    category: 'G',
+    topic: 'canned-cycle',
+    prompt: {
+      en: 'What does G85 do?',
+      ru: 'Что делает G85?',
+    },
+    options: [
+      {
+        en: 'Boring cycle that feeds in and feeds back out',
+        ru: 'Цикл растачивания с подачей на входе и на выходе',
+      },
+      {
+        en: 'Boring cycle that feeds in and rapids out',
+        ru: 'Цикл растачивания с подачей на входе и быстрым отводом',
+      },
+      { en: 'Peck drilling cycle', ru: 'Цикл прерывистого сверления' },
+      { en: 'Tapping cycle', ru: 'Цикл нарезания резьбы' },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G85 is a boring cycle that feeds into the hole and feeds back out at the same rate, giving a smoother bore finish than a rapid retract.',
+      ru: 'G85 — цикл растачивания, при котором подача выполняется как при входе, так и при выходе из отверстия, что даёт более чистую поверхность, чем быстрый отвод.',
+    },
+  },
+  {
+    id: 53,
+    category: 'G',
+    topic: 'canned-cycle',
+    prompt: {
+      en: 'What does G86 do?',
+      ru: 'Что делает G86?',
+    },
+    options: [
+      {
+        en: 'Boring cycle that stops the spindle at the bottom and rapids out',
+        ru: 'Цикл растачивания с остановкой шпинделя на дне и быстрым отводом',
+      },
+      {
+        en: 'Boring cycle that feeds out at the same rate as feeding in',
+        ru: 'Цикл растачивания с подачей на выходе, равной подаче на входе',
+      },
+      { en: 'Left-hand tapping cycle', ru: 'Цикл нарезания левой резьбы' },
+      {
+        en: 'Rigid tapping with synchronized feed',
+        ru: 'Жёсткое нарезание резьбы с синхронизированной подачей',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G86 is a boring cycle: the tool feeds to the bottom of the hole, the spindle stops, and the tool rapids out, which can leave a witness mark but is faster than G85.',
+      ru: 'G86 — цикл растачивания: инструмент подаётся до дна отверстия, шпиндель останавливается, и инструмент быстро отводится; это быстрее G85, но может оставить след на поверхности.',
+    },
+  },
+  {
+    id: 54,
+    category: 'G',
+    topic: 'measurement',
+    prompt: {
+      en: 'What is G31 used for?',
+      ru: 'Для чего используется G31?',
+    },
+    options: [
+      {
+        en: 'Skip function: motion stops early if a probe/skip signal is received',
+        ru: 'Функция пропуска: движение прерывается досрочно при получении сигнала от щупа',
+      },
+      { en: 'Coordinate rotation', ru: 'Поворот системы координат' },
+      { en: 'Rigid tapping', ru: 'Жёсткое нарезание резьбы' },
+      {
+        en: 'Setting a local coordinate system',
+        ru: 'Задание локальной системы координат',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G31 is the skip function, used with a touch probe: the linear move is interrupted early when the skip signal is triggered, and the position is captured.',
+      ru: 'G31 — функция пропуска, используемая с измерительным щупом: линейное перемещение прерывается досрочно при срабатывании сигнала пропуска, а позиция фиксируется.',
+    },
+  },
+  {
+    id: 55,
+    category: 'G',
+    topic: 'motion',
+    prompt: {
+      en: 'What does G33 do on a CNC lathe?',
+      ru: 'Что делает G33 на токарном станке с ЧПУ?',
+    },
+    options: [
+      {
+        en: 'Cuts a thread by synchronizing feed with spindle rotation',
+        ru: 'Нарезает резьбу, синхронизируя подачу с вращением шпинделя',
+      },
+      {
+        en: 'Performs rapid positioning',
+        ru: 'Выполняет быстрое позиционирование',
+      },
+      {
+        en: 'Selects constant surface speed',
+        ru: 'Включает постоянную скорость резания',
+      },
+      {
+        en: 'Activates a canned drilling cycle',
+        ru: 'Включает постоянный цикл сверления',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G33 performs thread cutting by synchronizing axis feed with spindle rotation so each pass follows the same thread lead.',
+      ru: 'G33 выполняет нарезание резьбы, синхронизируя подачу по оси с вращением шпинделя, чтобы каждый проход шёл по одному и тому же шагу резьбы.',
+    },
+  },
+  {
+    id: 56,
+    category: 'G',
+    topic: 'work-offset',
+    prompt: {
+      en: 'What is G10 used for?',
+      ru: 'Для чего используется G10?',
+    },
+    options: [
+      {
+        en: 'Programmable data input, e.g. setting work offsets or tool offsets from within the program',
+        ru: 'Программируемый ввод данных, например задание рабочих смещений или коррекций инструмента прямо из программы',
+      },
+      { en: 'Circular interpolation', ru: 'Круговая интерполяция' },
+      { en: 'Dwell', ru: 'Пауза (выдержка времени)' },
+      {
+        en: 'Cancelling tool compensation',
+        ru: 'Отмену коррекции инструмента',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G10 allows programmable data input, letting a program set values such as work offsets or tool offsets directly instead of requiring manual entry.',
+      ru: 'G10 позволяет программируемый ввод данных, позволяя программе задавать значения, такие как рабочие смещения или коррекции инструмента, без ручного ввода.',
+    },
+  },
+  {
+    id: 57,
+    category: 'M',
+    topic: 'coolant',
+    prompt: {
+      en: 'What does M07 typically turn on?',
+      ru: 'Что обычно включает M07?',
+    },
+    options: [
+      { en: 'Mist coolant', ru: 'Туманное охлаждение (масляный туман)' },
+      { en: 'Flood coolant', ru: 'Обильное охлаждение (СОЖ)' },
+      { en: 'Air blast', ru: 'Обдув воздухом' },
+      { en: 'Chip conveyor', ru: 'Конвейер стружки' },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'M07 typically turns on mist coolant, a fine spray used when flood coolant is unnecessary or undesirable.',
+      ru: 'M07 обычно включает туманное охлаждение — мелкодисперсный распыл, используемый, когда обильное охлаждение не нужно или нежелательно.',
+    },
+  },
+  {
+    id: 58,
+    category: 'M',
+    topic: 'spindle',
+    prompt: {
+      en: 'What does M19 do?',
+      ru: 'Что делает M19?',
+    },
+    options: [
+      {
+        en: 'Orients the spindle to a fixed angular position',
+        ru: 'Ориентирует шпиндель в фиксированное угловое положение',
+      },
+      {
+        en: 'Starts the spindle clockwise',
+        ru: 'Запускает шпиндель по часовой стрелке',
+      },
+      {
+        en: 'Stops the spindle at any position',
+        ru: 'Останавливает шпиндель в произвольном положении',
+      },
+      { en: 'Changes the tool', ru: 'Меняет инструмент' },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'M19 performs spindle orientation, stopping the spindle at a specific angular position, often needed before a tool change or a boring bar retract.',
+      ru: 'M19 выполняет ориентацию шпинделя, останавливая его в определённом угловом положении, что часто требуется перед сменой инструмента или отводом расточной оправки.',
+    },
+  },
+  {
+    id: 59,
+    category: 'M',
+    topic: 'feed-mode',
+    prompt: {
+      en: 'What does M48 do?',
+      ru: 'Что делает M48?',
+    },
+    options: [
+      {
+        en: 'Enables feed rate and spindle speed overrides',
+        ru: 'Разрешает работу корректоров подачи и скорости шпинделя',
+      },
+      { en: 'Disables feed rate overrides', ru: 'Отключает корректоры подачи' },
+      { en: 'Turns on coolant', ru: 'Включает СОЖ' },
+      { en: 'Cancels a canned cycle', ru: 'Отменяет постоянный цикл' },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'M48 re-enables feed rate and speed override controls after they were disabled, letting the operator adjust them from the control panel again.',
+      ru: 'M48 повторно разрешает работу корректоров подачи и скорости после их отключения, позволяя оператору снова регулировать их с пульта управления.',
+    },
+  },
+  {
+    id: 60,
+    category: 'M',
+    topic: 'feed-mode',
+    prompt: {
+      en: 'What does M49 do?',
+      ru: 'Что делает M49?',
+    },
+    options: [
+      {
+        en: 'Disables feed rate and spindle speed overrides, locking them at programmed values',
+        ru: 'Отключает корректоры подачи и скорости шпинделя, фиксируя их на запрограммированных значениях',
+      },
+      { en: 'Enables feed rate overrides', ru: 'Включает корректоры подачи' },
+      { en: 'Starts the spindle', ru: 'Запускает шпиндель' },
+      { en: 'Ends the program', ru: 'Завершает программу' },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'M49 disables feed rate and spindle speed override controls, forcing the machine to run at the programmed values regardless of the operator panel settings.',
+      ru: 'M49 отключает корректоры подачи и скорости шпинделя, заставляя станок работать на запрограммированных значениях независимо от настроек на пульте.',
+    },
+  },
 ];
 
 export function getQuestionsForQuiz(
