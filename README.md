@@ -5,8 +5,9 @@ A React Native Expo app for practicing CNC G-code quiz questions offline with a 
 ## Features
 
 - Practice 40+ quiz questions covering common G and M codes, tagged by category and topic
+- English and Russian interface and quiz content, with a language toggle in the app
 - Questions and answer options are shuffled each session
-- Local in-app SQLite storage for questions and your answer history
+- Local in-app SQLite storage for questions, your answer history, and language preference
 - Stats view showing overall accuracy, accuracy by topic, and your weakest questions
 - Backup your answer history to a JSON file and share/save it
 - Restore answers from a previously exported backup file
@@ -18,7 +19,7 @@ A React Native Expo app for practicing CNC G-code quiz questions offline with a 
 - React Native + Expo
 - TypeScript
 - Expo SQLite
-- Expo FileSystem, Expo Sharing, Expo DocumentPicker (backup/restore)
+- Expo FileSystem (backup/restore, including its built-in file picker), Expo Sharing
 - pnpm
 - Vitest
 - Biome (lint/format)
@@ -46,10 +47,11 @@ A React Native Expo app for practicing CNC G-code quiz questions offline with a 
 
 ## Project Structure
 
-- src/app.tsx — main quiz UI, including the stats view and backup/restore actions
-- src/data/questions.ts — quiz question definitions (with category/topic metadata)
+- src/app.tsx — main quiz UI, including the stats view, language toggle, and backup/restore actions
+- src/i18n.ts — language types, `localize()` helper, and English/Russian UI string dictionaries
+- src/data/questions.ts — quiz question definitions (with category/topic metadata and `{en, ru}` localized prompt/options/explanation)
 - src/data/quizLogic.ts — pure shuffle, progress, and stats computation logic (unit tested)
-- src/data/database.ts — local SQLite initialization, question loading, and answer persistence
+- src/data/database.ts — local SQLite initialization, question loading, answer persistence, and language preference storage
 - src/data/backupFormat.ts — pure backup serialization/validation logic (unit tested)
-- src/data/backup.ts — file export/share and import/pick logic using Expo FileSystem, Sharing, and DocumentPicker
+- src/data/backup.ts — file export/share and import/pick logic using Expo FileSystem and Sharing
 - src/tests — Vitest test files

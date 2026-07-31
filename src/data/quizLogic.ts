@@ -1,3 +1,4 @@
+import type { LocalizedText } from '../i18n';
 import type { QuizCategory, QuizQuestion } from './questions';
 
 export type AnswerRecord = {
@@ -9,7 +10,7 @@ export type QuestionStat = {
   questionId: number;
   category: QuizCategory;
   topic: string;
-  prompt: string;
+  prompt: LocalizedText;
   attempts: number;
   correct: number;
   accuracy: number;

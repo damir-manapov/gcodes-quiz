@@ -15,19 +15,26 @@ const questions: QuizQuestion[] = [
     id: 1,
     category: 'G',
     topic: 'motion',
-    prompt: 'Q1',
-    options: ['a', 'b', 'c'],
+    prompt: { en: 'Q1', ru: 'В1' },
+    options: [
+      { en: 'a', ru: 'а' },
+      { en: 'b', ru: 'б' },
+      { en: 'c', ru: 'в' },
+    ],
     correctAnswer: 1,
-    explanation: 'exp1',
+    explanation: { en: 'exp1', ru: 'оу1' },
   },
   {
     id: 2,
     category: 'M',
     topic: 'spindle',
-    prompt: 'Q2',
-    options: ['x', 'y'],
+    prompt: { en: 'Q2', ru: 'В2' },
+    options: [
+      { en: 'x', ru: 'х' },
+      { en: 'y', ru: 'у' },
+    ],
     correctAnswer: 0,
-    explanation: 'exp2',
+    explanation: { en: 'exp2', ru: 'оу2' },
   },
 ];
 
@@ -56,8 +63,8 @@ describe('shuffleQuizSession', () => {
       expect(question.options[question.correctAnswer]).toBe(
         originalCorrectText,
       );
-      expect(question.options.slice().sort()).toEqual(
-        original.options.slice().sort(),
+      expect(question.options.map((o) => o.en).sort()).toEqual(
+        original.options.map((o) => o.en).sort(),
       );
     }
   });

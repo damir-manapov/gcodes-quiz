@@ -18,8 +18,10 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { exportAnswersToFile, importAnswersFromFile } from './data/backup';
 import {
   getStoredAnswers,
+  getLanguage as getStoredLanguage,
   getStoredQuestions,
   initializeDatabase,
+  setLanguage as persistLanguage,
   recordAnswer,
 } from './data/database';
 import type { QuizQuestion } from './data/questions';
@@ -34,6 +36,7 @@ import {
   type QuestionStat,
   shuffleQuizSession,
 } from './data/quizLogic';
+import { LANGUAGES, type Language, localize, uiStrings } from './i18n';
 
 export default function App() {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -50,6 +53,31 @@ export default function App() {
   );
   const [isStatsLoading, setIsStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState<string | null>(null);
+  const [language, setLanguageState] = useState<Language>('en');
+  const t = uiStrings[language];
+
+  useEffect(() => {
+    let isMounted = true;
+    getStoredLanguage()
+      .then((storedLanguage) => {
+        if (isMounted) {
+          setLanguageState(storedLanguage);
+        }
+      })
+      .catch(() => {
+        // Keep the default language if it can't be loaded.
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const changeLanguage = (next: Language) => {
+    setLanguageState(next);
+    persistLanguage(next).catch(() => {
+      // Ignore persistence failures; the in-session language still updates.
+    });
+  };
 
   const loadQuiz = useCallback(() => {
     let isMounted = true;
@@ -69,7 +97,7 @@ export default function App() {
       })
       .catch(() => {
         if (isMounted) {
-          setLoadError('Could not load quiz questions. Please try again.');
+          setLoadError(uiStrings[language].loadErrorMessage);
           setIsReady(true);
         }
       });
@@ -77,7 +105,7 @@ export default function App() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [language]);
 
   useEffect(() => loadQuiz(), [loadQuiz]);
 
@@ -143,7 +171,7 @@ export default function App() {
         })),
       );
     } catch {
-      setStatsError('Could not load your answer history.');
+      setStatsError(t.statsLoadErrorMessage);
     } finally {
       setIsStatsLoading(false);
     }
@@ -160,13 +188,10 @@ export default function App() {
     setIsBackupBusy(true);
     try {
       await exportAnswersToFile();
-      Alert.alert('Backup ready', 'Your answers were exported successfully.');
+      Alert.alert(t.backupReadyTitle, t.backupReadyMessage);
     } catch (error) {
       console.error('Backup failed', error);
-      Alert.alert(
-        'Backup failed',
-        'Could not export your answers. Please try again.',
-      );
+      Alert.alert(t.backupFailedTitle, t.backupFailedMessage);
     } finally {
       setIsBackupBusy(false);
     }
@@ -180,22 +205,13 @@ export default function App() {
     try {
       const result = await importAnswersFromFile();
       if (result === 'imported') {
-        Alert.alert(
-          'Restore complete',
-          'Your answers were imported successfully.',
-        );
+        Alert.alert(t.restoreCompleteTitle, t.restoreCompleteMessage);
       } else if (result === 'invalid') {
-        Alert.alert(
-          'Restore failed',
-          'That file is not a valid answers backup.',
-        );
+        Alert.alert(t.restoreInvalidTitle, t.restoreInvalidMessage);
       }
     } catch (error) {
       console.error('Restore failed', error);
-      Alert.alert(
-        'Restore failed',
-        'Could not import your answers. Please try again.',
-      );
+      Alert.alert(t.restoreFailedTitle, t.restoreFailedMessage);
     } finally {
       setIsBackupBusy(false);
     }
@@ -215,10 +231,25 @@ export default function App() {
       <SafeAreaView style={styles.safeArea}>
         <StatusBar style="dark" />
         <ScrollView contentContainerStyle={styles.container}>
-          <Text style={styles.title}>G-Code Quiz</Text>
-          <Text style={styles.subtitle}>
-            Practice CNC programming fundamentals with local quiz questions.
-          </Text>
+          <Text style={styles.title}>{t.appTitle}</Text>
+          <Text style={styles.subtitle}>{t.appSubtitle}</Text>
+
+          <View style={styles.backupRow}>
+            {LANGUAGES.map((lang) => (
+              <TouchableOpacity
+                key={lang}
+                style={[
+                  styles.backupButton,
+                  lang === language ? styles.selectedOption : null,
+                ]}
+                onPress={() => changeLanguage(lang)}
+              >
+                <Text style={styles.backupButtonText}>
+                  {lang.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
 
           <View style={styles.backupRow}>
             <TouchableOpacity
@@ -227,7 +258,7 @@ export default function App() {
               disabled={!isReady}
             >
               <Text style={styles.backupButtonText}>
-                {view === 'quiz' ? 'View stats' : 'Back to quiz'}
+                {view === 'quiz' ? t.viewStats : t.backToQuiz}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -235,23 +266,21 @@ export default function App() {
               onPress={handleBackup}
               disabled={isBackupBusy}
             >
-              <Text style={styles.backupButtonText}>Backup answers</Text>
+              <Text style={styles.backupButtonText}>{t.backupAnswers}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.backupButton}
               onPress={handleRestore}
               disabled={isBackupBusy}
             >
-              <Text style={styles.backupButtonText}>Restore answers</Text>
+              <Text style={styles.backupButtonText}>{t.restoreAnswers}</Text>
             </TouchableOpacity>
           </View>
 
           {view === 'stats' ? (
             isStatsLoading ? (
               <View style={styles.card}>
-                <Text style={styles.cardText}>
-                  Loading your answer history...
-                </Text>
+                <Text style={styles.cardText}>{t.loadingHistory}</Text>
               </View>
             ) : statsError ? (
               <View style={styles.card}>
@@ -260,27 +289,32 @@ export default function App() {
             ) : overallStats ? (
               <>
                 <View style={styles.card}>
-                  <Text style={styles.prompt}>Overall</Text>
+                  <Text style={styles.prompt}>{t.overallHeading}</Text>
                   <Text style={styles.cardText}>
-                    {overallStats.totalCorrect}/{overallStats.totalAttempts}{' '}
-                    correct ({overallStats.accuracy}%) &middot;{' '}
-                    {overallStats.questionsAttempted}/
-                    {overallStats.questionsTotal} questions attempted
+                    {t.overallSummary(
+                      overallStats.totalCorrect,
+                      overallStats.totalAttempts,
+                      overallStats.accuracy,
+                      overallStats.questionsAttempted,
+                      overallStats.questionsTotal,
+                    )}
                   </Text>
                 </View>
 
                 <View style={styles.card}>
-                  <Text style={styles.prompt}>By topic</Text>
+                  <Text style={styles.prompt}>{t.byTopicHeading}</Text>
                   {topicStats.length === 0 ? (
-                    <Text style={styles.cardText}>
-                      No answers recorded yet.
-                    </Text>
+                    <Text style={styles.cardText}>{t.noAnswersRecorded}</Text>
                   ) : (
                     topicStats.map((stat) => (
                       <View key={stat.topic} style={styles.statRow}>
                         <Text style={styles.statLabel}>{stat.topic}</Text>
                         <Text style={styles.statValue}>
-                          {stat.correct}/{stat.attempts} ({stat.accuracy}%)
+                          {t.statAccuracy(
+                            stat.correct,
+                            stat.attempts,
+                            stat.accuracy,
+                          )}
                         </Text>
                       </View>
                     ))
@@ -288,7 +322,7 @@ export default function App() {
                 </View>
 
                 <View style={styles.card}>
-                  <Text style={styles.prompt}>Weakest questions</Text>
+                  <Text style={styles.prompt}>{t.weakestQuestionsHeading}</Text>
                   {sortedQuestionStats.some((stat) => stat.attempts > 0) ? (
                     sortedQuestionStats
                       .filter((stat) => stat.attempts > 0)
@@ -296,43 +330,45 @@ export default function App() {
                       .map((stat) => (
                         <View key={stat.questionId} style={styles.statRow}>
                           <Text style={styles.statLabel} numberOfLines={2}>
-                            {stat.prompt}
+                            {localize(stat.prompt, language)}
                           </Text>
                           <Text style={styles.statValue}>
-                            {stat.correct}/{stat.attempts} ({stat.accuracy}%)
+                            {t.statAccuracy(
+                              stat.correct,
+                              stat.attempts,
+                              stat.accuracy,
+                            )}
                           </Text>
                         </View>
                       ))
                   ) : (
-                    <Text style={styles.cardText}>
-                      Answer some questions to see your weakest topics here.
-                    </Text>
+                    <Text style={styles.cardText}>{t.answerSomeQuestions}</Text>
                   )}
                 </View>
               </>
             ) : null
           ) : !isReady ? (
             <View style={styles.card}>
-              <Text style={styles.cardText}>Loading quiz questions...</Text>
+              <Text style={styles.cardText}>{t.loadingQuestions}</Text>
             </View>
           ) : loadError ? (
             <View style={styles.card}>
               <Text style={styles.cardText}>{loadError}</Text>
               <TouchableOpacity style={styles.nextButton} onPress={loadQuiz}>
-                <Text style={styles.nextButtonText}>Retry</Text>
+                <Text style={styles.nextButtonText}>{t.retry}</Text>
               </TouchableOpacity>
             </View>
           ) : questions.length === 0 ? (
             <View style={styles.card}>
-              <Text style={styles.cardText}>No questions available.</Text>
+              <Text style={styles.cardText}>{t.noQuestionsAvailable}</Text>
             </View>
           ) : currentQuestion ? (
             <>
               <View style={styles.headerRow}>
                 <Text style={styles.meta}>
-                  Question {currentIndex + 1} of {questions.length}
+                  {t.questionProgress(currentIndex + 1, questions.length)}
                 </Text>
-                <Text style={styles.meta}>Score {score}</Text>
+                <Text style={styles.meta}>{t.score(score)}</Text>
               </View>
               <View style={styles.progressTrack}>
                 <View
@@ -341,7 +377,9 @@ export default function App() {
               </View>
 
               <View style={styles.card}>
-                <Text style={styles.prompt}>{currentQuestion.prompt}</Text>
+                <Text style={styles.prompt}>
+                  {localize(currentQuestion.prompt, language)}
+                </Text>
                 {currentQuestion.options.map((option, index) => {
                   const isCorrect = index === currentQuestion.correctAnswer;
                   const isSelected = index === selectedAnswer;
@@ -363,12 +401,14 @@ export default function App() {
 
                   return (
                     <TouchableOpacity
-                      key={option}
+                      key={option.en}
                       style={mergedStyle}
                       onPress={() => submitAnswer(index)}
                       disabled={showAnswer}
                     >
-                      <Text style={styles.optionText}>{option}</Text>
+                      <Text style={styles.optionText}>
+                        {localize(option, language)}
+                      </Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -376,15 +416,17 @@ export default function App() {
 
               {showAnswer ? (
                 <View style={styles.feedbackCard}>
-                  <Text style={styles.feedbackTitle}>Explanation</Text>
+                  <Text style={styles.feedbackTitle}>
+                    {t.explanationHeading}
+                  </Text>
                   <Text style={styles.feedbackText}>
-                    {currentQuestion.explanation}
+                    {localize(currentQuestion.explanation, language)}
                   </Text>
                   <TouchableOpacity
                     style={styles.nextButton}
                     onPress={nextQuestion}
                   >
-                    <Text style={styles.nextButtonText}>Next question</Text>
+                    <Text style={styles.nextButtonText}>{t.nextQuestion}</Text>
                   </TouchableOpacity>
                 </View>
               ) : null}

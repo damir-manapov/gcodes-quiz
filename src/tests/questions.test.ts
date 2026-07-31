@@ -30,4 +30,17 @@ describe('quiz question selection', () => {
     const ids = quizQuestions.map((question) => question.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
+
+  it('has non-empty en and ru text for every prompt, option, and explanation', () => {
+    for (const question of quizQuestions) {
+      expect(question.prompt.en.length).toBeGreaterThan(0);
+      expect(question.prompt.ru.length).toBeGreaterThan(0);
+      expect(question.explanation.en.length).toBeGreaterThan(0);
+      expect(question.explanation.ru.length).toBeGreaterThan(0);
+      for (const option of question.options) {
+        expect(option.en.length).toBeGreaterThan(0);
+        expect(option.ru.length).toBeGreaterThan(0);
+      }
+    }
+  });
 });

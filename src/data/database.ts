@@ -1,4 +1,5 @@
 import * as SQLite from 'expo-sqlite';
+import type { Language, LocalizedText } from '../i18n';
 import type { AnswersBackup } from './backupFormat';
 import { getQuestionsForQuiz, type QuizQuestion } from './questions';
 
@@ -41,6 +42,14 @@ const MIGRATIONS: Array<(db: SQLite.SQLiteDatabase) => Promise<void>> = [
     await db.execAsync(`
       ALTER TABLE questions ADD COLUMN category TEXT NOT NULL DEFAULT 'G';
       ALTER TABLE questions ADD COLUMN topic TEXT NOT NULL DEFAULT 'general';
+    `);
+  },
+  async (db) => {
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS preferences (
+        key TEXT PRIMARY KEY NOT NULL,
+        value TEXT NOT NULL
+      );
     `);
   },
 ];
@@ -86,10 +95,10 @@ export async function initializeDatabase() {
              topic = excluded.topic`,
           [
             question.id,
-            question.prompt,
+            JSON.stringify(question.prompt),
             JSON.stringify(question.options),
             question.correctAnswer,
-            question.explanation,
+            JSON.stringify(question.explanation),
             question.category,
             question.topic,
           ],
@@ -122,13 +131,32 @@ export async function getStoredQuestions(): Promise<QuizQuestion[]> {
 
   return rows.map((row) => ({
     id: row.id,
-    prompt: row.prompt,
-    options: JSON.parse(row.options) as string[],
+    prompt: JSON.parse(row.prompt) as LocalizedText,
+    options: JSON.parse(row.options) as LocalizedText[],
     correctAnswer: row.correctAnswer,
-    explanation: row.explanation,
+    explanation: JSON.parse(row.explanation) as LocalizedText,
     category: row.category,
     topic: row.topic,
   }));
+}
+
+const DEFAULT_LANGUAGE: Language = 'en';
+
+export async function getLanguage(): Promise<Language> {
+  const db = await initializeDatabase();
+  const row = await db.getFirstAsync<{ value: string }>(
+    "SELECT value FROM preferences WHERE key = 'language'",
+  );
+  return row?.value === 'ru' ? 'ru' : DEFAULT_LANGUAGE;
+}
+
+export async function setLanguage(language: Language): Promise<void> {
+  const db = await initializeDatabase();
+  await db.runAsync(
+    `INSERT INTO preferences (key, value) VALUES ('language', ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [language],
+  );
 }
 
 export async function recordAnswer(
