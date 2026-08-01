@@ -48,6 +48,14 @@ A React Native Expo app for practicing CNC G-code quiz questions offline with a 
 - `bash health.sh` — secret scanning (requires [gitleaks](https://github.com/gitleaks/gitleaks) installed locally), dependency freshness, vulnerability audit
 - `bash all-checks.sh` — runs both; also runs automatically as a pre-commit hook
 
+## Building an APK (EAS)
+
+The `preview` profile in `eas.json` is configured to build an installable Android APK (the `production` profile builds an `.aab` for the Play Store instead):
+```bash
+npx eas-cli build --platform android --profile preview
+```
+Requires `eas login` on first use.
+
 ## Project Structure
 
 - src/app.tsx — thin composition root that wires the hooks and components together
