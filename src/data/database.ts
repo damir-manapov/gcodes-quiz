@@ -11,6 +11,7 @@ export type StoredAnswer = {
   selectedAnswer: number;
   isCorrect: boolean;
   answeredAt: string;
+  answerHash: string;
 };
 
 export type { AnswersBackup } from './backupFormat';
@@ -55,6 +56,16 @@ const MIGRATIONS: Array<(db: SQLite.SQLiteDatabase) => Promise<void>> = [
   async (db) => {
     await db.execAsync(`
       ALTER TABLE questions ADD COLUMN code TEXT;
+    `);
+  },
+  async (db) => {
+    // Old answers were keyed by option index, which has no stable meaning
+    // now that options are rebuilt per-session from a shared distractor
+    // pool. Discard old history and switch to hashing the selected
+    // answer's text instead, so it stays a stable identity across sessions.
+    await db.execAsync(`
+      DELETE FROM answers;
+      ALTER TABLE answers ADD COLUMN answerHash TEXT NOT NULL DEFAULT '';
     `);
   },
 ];
@@ -172,11 +183,18 @@ export async function recordAnswer(
   questionId: number,
   selectedAnswer: number,
   isCorrect: boolean,
+  answerHash: string,
 ): Promise<void> {
   const db = await initializeDatabase();
   await db.runAsync(
-    'INSERT INTO answers (questionId, selectedAnswer, isCorrect, answeredAt) VALUES (?, ?, ?, ?)',
-    [questionId, selectedAnswer, isCorrect ? 1 : 0, new Date().toISOString()],
+    'INSERT INTO answers (questionId, selectedAnswer, isCorrect, answeredAt, answerHash) VALUES (?, ?, ?, ?, ?)',
+    [
+      questionId,
+      selectedAnswer,
+      isCorrect ? 1 : 0,
+      new Date().toISOString(),
+      answerHash,
+    ],
   );
 }
 
@@ -188,8 +206,9 @@ export async function getStoredAnswers(): Promise<StoredAnswer[]> {
     selectedAnswer: number;
     isCorrect: number;
     answeredAt: string;
+    answerHash: string;
   }>(
-    'SELECT id, questionId, selectedAnswer, isCorrect, answeredAt FROM answers ORDER BY id ASC',
+    'SELECT id, questionId, selectedAnswer, isCorrect, answeredAt, answerHash FROM answers ORDER BY id ASC',
   );
 
   return rows.map((row) => ({
@@ -198,6 +217,7 @@ export async function getStoredAnswers(): Promise<StoredAnswer[]> {
     selectedAnswer: row.selectedAnswer,
     isCorrect: row.isCorrect === 1,
     answeredAt: row.answeredAt,
+    answerHash: row.answerHash,
   }));
 }
 
@@ -210,6 +230,7 @@ export async function exportAnswersBackup(): Promise<AnswersBackup> {
       selectedAnswer: answer.selectedAnswer,
       isCorrect: answer.isCorrect,
       answeredAt: answer.answeredAt,
+      answerHash: answer.answerHash,
     })),
   };
 }
@@ -222,12 +243,13 @@ export async function importAnswersBackup(
     // OR IGNORE skips rows that collide with the (questionId, answeredAt) unique
     // constraint, so re-importing the same backup is a safe no-op.
     await db.runAsync(
-      'INSERT OR IGNORE INTO answers (questionId, selectedAnswer, isCorrect, answeredAt) VALUES (?, ?, ?, ?)',
+      'INSERT OR IGNORE INTO answers (questionId, selectedAnswer, isCorrect, answeredAt, answerHash) VALUES (?, ?, ?, ?, ?)',
       [
         answer.questionId,
         answer.selectedAnswer,
         answer.isCorrect ? 1 : 0,
         answer.answeredAt,
+        answer.answerHash,
       ],
     );
   }

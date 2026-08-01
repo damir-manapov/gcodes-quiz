@@ -23,6 +23,7 @@ describe('backup format', () => {
           selectedAnswer: 0,
           isCorrect: true,
           answeredAt: '2024-05-06T07:00:00.000Z',
+          answerHash: 'abc123',
         },
       ],
     };
@@ -58,6 +59,7 @@ describe('backup format', () => {
             selectedAnswer: 0,
             isCorrect: true,
             answeredAt: 'x',
+            answerHash: 'abc',
           },
         ],
       }),

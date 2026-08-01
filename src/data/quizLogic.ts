@@ -92,13 +92,6 @@ export function shuffleQuizSession(
   );
 }
 
-export function shuffleQuestionOptionsForSession(
-  questions: QuizQuestion[],
-  random: () => number = Math.random,
-): QuizQuestion[] {
-  return questions.map((question) => shuffleQuestionOptions(question, random));
-}
-
 const CODE_PATTERN = /\b([GM]\d{1,3}(?:\.\d)?)\b/g;
 
 // Returns the single G/M code a question is about, used to build the
@@ -118,40 +111,203 @@ export function getQuestionCode(question: QuizQuestion): string | null {
   return unique.size === 1 ? (matches[0] as string) : null;
 }
 
-// Turns a question into its reverse form: the prompt becomes the
-// description of the action (the original correct option's text) and the
-// options become G/M codes to choose from, drawn from `pool`. Returns the
-// question unchanged if it has no single identifiable code.
-export function toReverseQuestion(
-  question: QuizQuestion,
-  pool: QuizQuestion[],
-  random: () => number = Math.random,
-): QuizQuestion {
-  const code = getQuestionCode(question);
-  if (!code) {
-    return question;
+// Stable, non-cryptographic hash (FNV-1a, 32-bit) used to identify a piece
+// of answer text independent of its position in a shuffled option list or
+// which quiz session it appeared in. Not for security purposes.
+export function hashAnswerText(text: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16);
+}
+
+export function getAnswerHash(text: LocalizedText): string {
+  return hashAnswerText(text.en);
+}
+
+export type AnswerHashRecord = {
+  questionId: number;
+  answerHash: string;
+};
+
+// Tallies how many times each (questionId, answerHash) pair was selected in
+// the answer history, used to weight distractor selection so wrong answers a
+// user tends to pick are more likely to be offered again.
+export function computeHashCounts(
+  answers: AnswerHashRecord[],
+): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const answer of answers) {
+    const key = `${answer.questionId}:${answer.answerHash}`;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return counts;
+}
+
+type DistractorCandidate = {
+  hash: string;
+  text: LocalizedText;
+};
+
+// Picks `count` items from `candidates` without replacement, using
+// weighted-random sampling where higher-weight items are more likely (but
+// not guaranteed) to be picked first.
+function weightedSample(
+  candidates: DistractorCandidate[],
+  weightOf: (candidate: DistractorCandidate) => number,
+  count: number,
+  random: () => number,
+): DistractorCandidate[] {
+  const pool = [...candidates];
+  const picked: DistractorCandidate[] = [];
+
+  while (picked.length < count && pool.length > 0) {
+    const weights = pool.map(weightOf);
+    const total = weights.reduce((sum, weight) => sum + weight, 0);
+    let threshold = random() * total;
+    let chosenIndex = pool.length - 1;
+    for (let i = 0; i < weights.length; i++) {
+      threshold -= weights[i] as number;
+      if (threshold <= 0) {
+        chosenIndex = i;
+        break;
+      }
+    }
+    picked.push(pool[chosenIndex] as DistractorCandidate);
+    pool.splice(chosenIndex, 1);
   }
 
-  const distractorPool = Array.from(
-    new Set(
-      pool
-        .map((candidate) => getQuestionCode(candidate))
-        .filter(
-          (candidate): candidate is string =>
-            candidate !== null && candidate !== code,
-        ),
-    ),
+  return picked;
+}
+
+// Builds the pool of possible wrong-answer texts for a forward ("code ->
+// meaning") question: its own hand-authored wrong options, plus the correct
+// answer of every other question in the bank (each a real, plausible fact
+// about a different code), deduplicated by hash.
+function buildForwardDistractorPool(
+  question: QuizQuestion,
+  allQuestions: QuizQuestion[],
+): DistractorCandidate[] {
+  const correctHash = getAnswerHash(
+    question.options[question.correctAnswer] as LocalizedText,
   );
-  const distractors = shuffle(distractorPool, random).slice(0, 3);
-  const codeOptions = shuffle([code, ...distractors], random);
-  const correctAnswer = codeOptions.indexOf(code);
-  const description =
-    question.options[question.correctAnswer] ?? question.prompt;
+  const seen = new Set<string>([correctHash]);
+  const pool: DistractorCandidate[] = [];
+
+  const add = (text: LocalizedText) => {
+    const hash = getAnswerHash(text);
+    if (seen.has(hash)) {
+      return;
+    }
+    seen.add(hash);
+    pool.push({ hash, text });
+  };
+
+  question.options.forEach((text, index) => {
+    if (index !== question.correctAnswer) {
+      add(text);
+    }
+  });
+  for (const other of allQuestions) {
+    if (other.id === question.id) {
+      continue;
+    }
+    add(other.options[other.correctAnswer] as LocalizedText);
+  }
+
+  return pool;
+}
+
+// Builds the pool of possible wrong codes for a reverse ("action -> code")
+// question: every other eligible question's code, deduplicated.
+function buildReverseDistractorPool(
+  question: QuizQuestion,
+  allQuestions: QuizQuestion[],
+  code: string,
+): DistractorCandidate[] {
+  const seen = new Set<string>([code]);
+  const pool: DistractorCandidate[] = [];
+
+  for (const other of allQuestions) {
+    if (other.id === question.id) {
+      continue;
+    }
+    const otherCode = getQuestionCode(other);
+    if (otherCode === null || seen.has(otherCode)) {
+      continue;
+    }
+    seen.add(otherCode);
+    pool.push({ hash: otherCode, text: { en: otherCode, ru: otherCode } });
+  }
+
+  return pool;
+}
+
+// Builds the question as it should be displayed in a quiz session: for
+// forward mode, shuffles in extra distractors pooled from the rest of the
+// question bank; for reverse mode, turns the prompt into the description of
+// the action and the options into G/M codes. In both cases, distractors the
+// user has selected more often in the past for this question are weighted
+// to appear more often (Laplace-smoothed so untried distractors still have a
+// baseline chance). Reverse-mode questions with no single identifiable code
+// are returned unchanged.
+export function buildSessionQuestion(
+  question: QuizQuestion,
+  allQuestions: QuizQuestion[],
+  mode: QuizMode,
+  hashCounts: Map<string, number>,
+  optionCount = 4,
+  random: () => number = Math.random,
+): QuizQuestion {
+  const weightOf = (candidate: DistractorCandidate) =>
+    1 + (hashCounts.get(`${question.id}:${candidate.hash}`) ?? 0);
+
+  if (mode === 'reverse') {
+    const code = getQuestionCode(question);
+    if (!code) {
+      return question;
+    }
+
+    const pool = buildReverseDistractorPool(question, allQuestions, code);
+    const distractors = weightedSample(pool, weightOf, optionCount - 1, random);
+    const correctOption: DistractorCandidate = {
+      hash: code,
+      text: { en: code, ru: code },
+    };
+    const codeOptions = shuffle([correctOption, ...distractors], random);
+    const correctAnswer = codeOptions.findIndex(
+      (option) => option.hash === code,
+    );
+    const description =
+      question.options[question.correctAnswer] ?? question.prompt;
+
+    return {
+      ...question,
+      prompt: description,
+      options: codeOptions.map((option) => option.text),
+      correctAnswer,
+    };
+  }
+
+  const correctHash = getAnswerHash(
+    question.options[question.correctAnswer] as LocalizedText,
+  );
+  const pool = buildForwardDistractorPool(question, allQuestions);
+  const distractors = weightedSample(pool, weightOf, optionCount - 1, random);
+  const correctOption: DistractorCandidate = {
+    hash: correctHash,
+    text: question.options[question.correctAnswer] as LocalizedText,
+  };
+  const options = shuffle([correctOption, ...distractors], random);
+  const correctAnswer = options.findIndex(
+    (option) => option.hash === correctHash,
+  );
 
   return {
     ...question,
-    prompt: description,
-    options: codeOptions.map((value) => ({ en: value, ru: value })),
+    options: options.map((option) => option.text),
     correctAnswer,
   };
 }

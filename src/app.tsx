@@ -27,9 +27,12 @@ import {
 import type { QuizQuestion } from './data/questions';
 import {
   type AnswerRecord,
+  buildSessionQuestion,
+  computeHashCounts,
   computeOverallStats,
   computeQuestionStats,
   computeTopicStats,
+  getAnswerHash,
   getNextQuestionIndex,
   getProgressPercent,
   getQuestionCode,
@@ -40,10 +43,14 @@ import {
   type QuestionOrder,
   type QuestionStat,
   type QuizMode,
-  shuffleQuestionOptionsForSession,
-  toReverseQuestion,
 } from './data/quizLogic';
-import { LANGUAGES, type Language, localize, uiStrings } from './i18n';
+import {
+  LANGUAGES,
+  type Language,
+  type LocalizedText,
+  localize,
+  uiStrings,
+} from './i18n';
 
 export default function App() {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -123,7 +130,20 @@ export default function App() {
             quizMode === 'reverse'
               ? ordered.filter((question) => getQuestionCode(question) !== null)
               : ordered;
-          setQuestions(shuffleQuestionOptionsForSession(eligible));
+          // Weight each question's distractors by how often the user has
+          // picked that specific wrong answer before, so frequent mistakes
+          // are more likely to be offered again.
+          const hashCounts = computeHashCounts(storedAnswers);
+          setQuestions(
+            eligible.map((question) =>
+              buildSessionQuestion(
+                question,
+                loadedQuestions,
+                quizMode,
+                hashCounts,
+              ),
+            ),
+          );
           setCurrentIndex(0);
           setSelectedAnswer(null);
           setScore(0);
@@ -146,13 +166,6 @@ export default function App() {
   useEffect(() => loadQuiz(), [loadQuiz]);
 
   const currentQuestion = questions[currentIndex] ?? null;
-  const displayQuestion = useMemo(
-    () =>
-      currentQuestion && quizMode === 'reverse'
-        ? toReverseQuestion(currentQuestion, questions)
-        : currentQuestion,
-    [currentQuestion, quizMode, questions],
-  );
   const progress = useMemo(
     () => getProgressPercent(currentIndex, questions.length),
     [currentIndex, questions.length],
@@ -187,18 +200,23 @@ export default function App() {
   }, [questionStats]);
 
   const submitAnswer = (answerIndex: number) => {
-    if (showAnswer || !displayQuestion) {
+    if (showAnswer || !currentQuestion) {
       return;
     }
     setSelectedAnswer(answerIndex);
     setShowAnswer(true);
-    const isCorrect = isCorrectAnswer(displayQuestion, answerIndex);
+    const isCorrect = isCorrectAnswer(currentQuestion, answerIndex);
     if (isCorrect) {
       setScore((value) => value + 1);
     }
-    recordAnswer(displayQuestion.id, answerIndex, isCorrect).catch(() => {
-      // Ignore persistence failures; the in-session quiz state is unaffected.
-    });
+    const answerHash = getAnswerHash(
+      currentQuestion.options[answerIndex] as LocalizedText,
+    );
+    recordAnswer(currentQuestion.id, answerIndex, isCorrect, answerHash).catch(
+      () => {
+        // Ignore persistence failures; the in-session quiz state is unaffected.
+      },
+    );
   };
 
   const openStats = async () => {
@@ -442,7 +460,7 @@ export default function App() {
             </View>
           ) : currentQuestion ? (
             (() => {
-              const question = displayQuestion ?? currentQuestion;
+              const question = currentQuestion;
               return (
                 <>
                   <View style={styles.headerRow}>

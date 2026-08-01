@@ -5,6 +5,7 @@ export type AnswersBackup = {
     selectedAnswer: number;
     isCorrect: boolean;
     answeredAt: string;
+    answerHash: string;
   }>;
 };
 
@@ -37,7 +38,8 @@ export function isAnswersBackup(value: unknown): value is AnswersBackup {
       typeof answer.questionId === 'number' &&
       typeof answer.selectedAnswer === 'number' &&
       typeof answer.isCorrect === 'boolean' &&
-      typeof answer.answeredAt === 'string'
+      typeof answer.answeredAt === 'string' &&
+      typeof answer.answerHash === 'string'
     );
   });
 }
