@@ -65,23 +65,11 @@ function shuffle<T>(items: T[], random: () => number): T[] {
   return result;
 }
 
-const CODE_PATTERN = /\b([GM]\d{1,3}(?:\.\d)?)\b/g;
-
 // Returns the single G/M code a question is about, used to build the
-// "action -> code" reverse quiz mode. Falls back to scanning the English
-// prompt for exactly one code mention when `question.code` isn't set; returns
-// null when no single code can be determined (question is ineligible for
-// reverse mode).
+// "action -> code" reverse quiz mode. Returns null when the question isn't
+// about one specific code (ineligible for reverse mode).
 export function getQuestionCode(question: QuizQuestion): string | null {
-  if (question.code) {
-    return question.code;
-  }
-  const matches = Array.from(
-    question.prompt.en.matchAll(CODE_PATTERN),
-    (match) => match[1] as string,
-  );
-  const unique = new Set(matches);
-  return unique.size === 1 ? (matches[0] as string) : null;
+  return question.code ?? null;
 }
 
 // Stable, non-cryptographic hash (FNV-1a, 32-bit) used to identify a piece

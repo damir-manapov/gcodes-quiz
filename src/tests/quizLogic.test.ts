@@ -201,20 +201,7 @@ describe('getQuestionCode', () => {
     expect(getQuestionCode(question)).toBe('M05');
   });
 
-  it('infers the code from a prompt mentioning exactly one code', () => {
-    const question: QuizQuestion = {
-      id: 11,
-      category: 'G',
-      topic: 'motion',
-      prompt: { en: 'What does G00 command do?', ru: 'В1' },
-      options: [{ en: 'Rapid move', ru: 'а' }],
-      correctAnswer: 0,
-      explanation: { en: 'exp', ru: 'оу' },
-    };
-    expect(getQuestionCode(question)).toBe('G00');
-  });
-
-  it('returns null when the prompt has no code or more than one code', () => {
+  it('returns null when the code field is not set', () => {
     const noCode: QuizQuestion = {
       id: 12,
       category: 'G',
@@ -224,17 +211,7 @@ describe('getQuestionCode', () => {
       correctAnswer: 0,
       explanation: { en: 'exp', ru: 'оу' },
     };
-    const twoCodes: QuizQuestion = {
-      id: 13,
-      category: 'G',
-      topic: 'canned-cycle',
-      prompt: { en: 'How does G82 differ from G81?', ru: 'В1' },
-      options: [{ en: 'a', ru: 'а' }],
-      correctAnswer: 0,
-      explanation: { en: 'exp', ru: 'оу' },
-    };
     expect(getQuestionCode(noCode)).toBeNull();
-    expect(getQuestionCode(twoCodes)).toBeNull();
   });
 });
 
@@ -244,6 +221,7 @@ describe('toReverseQuestion (via buildSessionQuestion in reverse mode)', () => {
       id: 20,
       category: 'G',
       topic: 'motion',
+      code: 'G00',
       prompt: { en: 'What does G00 command do?', ru: 'В1' },
       options: [
         { en: 'Rapid positioning move', ru: 'а' },
@@ -256,6 +234,7 @@ describe('toReverseQuestion (via buildSessionQuestion in reverse mode)', () => {
       id: 21,
       category: 'G',
       topic: 'motion',
+      code: 'G01',
       prompt: { en: 'What does G01 command do?', ru: 'В2' },
       options: [{ en: 'Linear interpolation', ru: 'б' }],
       correctAnswer: 0,
@@ -265,6 +244,7 @@ describe('toReverseQuestion (via buildSessionQuestion in reverse mode)', () => {
       id: 22,
       category: 'M',
       topic: 'spindle',
+      code: 'M03',
       prompt: { en: 'What does M03 command do?', ru: 'В3' },
       options: [{ en: 'Spindle clockwise', ru: 'в' }],
       correctAnswer: 0,

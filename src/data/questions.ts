@@ -10,9 +10,9 @@ export type QuizQuestion = {
   options: LocalizedText[];
   correctAnswer: number;
   explanation: LocalizedText;
-  // The single G/M code this question is about, e.g. 'G54'. Only needed when
-  // the prompt doesn't mention exactly one code (ambiguous or code-less
-  // prompts); otherwise it's inferred from the prompt text at runtime.
+  // The single G/M code this question is about, e.g. 'G54', used to build the
+  // "action -> code" reverse quiz mode. Omitted for questions that aren't
+  // about one specific code (conceptual questions).
   code?: string;
 };
 
@@ -21,6 +21,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 1,
     category: 'G',
     topic: 'motion',
+    code: 'G00',
     prompt: {
       en: 'What does G00 command do on a CNC machine?',
       ru: 'Что делает команда G00 на станке с ЧПУ?',
@@ -44,6 +45,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 2,
     category: 'G',
     topic: 'motion',
+    code: 'G01',
     prompt: {
       en: 'What does G01 command do?',
       ru: 'Что делает команда G01?',
@@ -88,6 +90,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 4,
     category: 'G',
     topic: 'units',
+    code: 'G21',
     prompt: {
       en: 'What does G21 specify?',
       ru: 'Что задаёт команда G21?',
@@ -128,6 +131,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 6,
     category: 'M',
     topic: 'spindle',
+    code: 'M03',
     prompt: {
       en: 'What does M03 command do?',
       ru: 'Что делает команда M03?',
@@ -198,6 +202,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 9,
     category: 'G',
     topic: 'motion',
+    code: 'G02',
     prompt: {
       en: 'What does G02 command in CNC programming?',
       ru: 'Что задаёт команда G02 в программировании ЧПУ?',
@@ -224,6 +229,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 10,
     category: 'G',
     topic: 'motion',
+    code: 'G03',
     prompt: {
       en: 'What does G03 command?',
       ru: 'Что задаёт команда G03?',
@@ -250,6 +256,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 11,
     category: 'G',
     topic: 'dwell',
+    code: 'G04',
     prompt: {
       en: 'What is the function of G04?',
       ru: 'Какую функцию выполняет G04?',
@@ -273,6 +280,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 12,
     category: 'G',
     topic: 'plane-selection',
+    code: 'G17',
     prompt: {
       en: 'What does G17 select?',
       ru: 'Какую плоскость выбирает G17?',
@@ -293,6 +301,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 13,
     category: 'G',
     topic: 'plane-selection',
+    code: 'G18',
     prompt: {
       en: 'What does G18 select?',
       ru: 'Какую плоскость выбирает G18?',
@@ -313,6 +322,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 14,
     category: 'G',
     topic: 'plane-selection',
+    code: 'G19',
     prompt: {
       en: 'What does G19 select?',
       ru: 'Какую плоскость выбирает G19?',
@@ -333,6 +343,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 15,
     category: 'G',
     topic: 'units',
+    code: 'G20',
     prompt: {
       en: 'What does G20 specify?',
       ru: 'Что задаёт команда G20?',
@@ -353,6 +364,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 16,
     category: 'G',
     topic: 'homing',
+    code: 'G28',
     prompt: {
       en: 'What does G28 command a CNC machine to do?',
       ru: 'Что предписывает станку команда G28?',
@@ -376,6 +388,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 17,
     category: 'G',
     topic: 'compensation',
+    code: 'G40',
     prompt: {
       en: 'What does G40 do?',
       ru: 'Что делает G40?',
@@ -408,6 +421,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 18,
     category: 'G',
     topic: 'compensation',
+    code: 'G41',
     prompt: {
       en: 'What does G41 activate?',
       ru: 'Что включает G41?',
@@ -431,6 +445,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 19,
     category: 'G',
     topic: 'compensation',
+    code: 'G42',
     prompt: {
       en: 'What does G42 activate?',
       ru: 'Что включает G42?',
@@ -457,6 +472,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 20,
     category: 'G',
     topic: 'compensation',
+    code: 'G43',
     prompt: {
       en: 'What does G43 apply?',
       ru: 'Что применяет G43?',
@@ -483,6 +499,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 21,
     category: 'G',
     topic: 'compensation',
+    code: 'G49',
     prompt: {
       en: 'What does G49 do?',
       ru: 'Что делает G49?',
@@ -542,6 +559,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 23,
     category: 'G',
     topic: 'canned-cycle',
+    code: 'G80',
     prompt: {
       en: 'What does G80 do?',
       ru: 'Что делает G80?',
@@ -565,6 +583,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 24,
     category: 'G',
     topic: 'canned-cycle',
+    code: 'G81',
     prompt: {
       en: 'What operation does G81 perform?',
       ru: 'Какую операцию выполняет G81?',
@@ -615,6 +634,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 26,
     category: 'G',
     topic: 'canned-cycle',
+    code: 'G83',
     prompt: {
       en: 'What is G83 used for?',
       ru: 'Для чего используется G83?',
@@ -641,6 +661,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 27,
     category: 'G',
     topic: 'canned-cycle',
+    code: 'G84',
     prompt: {
       en: 'What does G84 perform?',
       ru: 'Какую операцию выполняет G84?',
@@ -661,6 +682,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 28,
     category: 'G',
     topic: 'positioning',
+    code: 'G90',
     prompt: {
       en: 'What does G90 specify?',
       ru: 'Что задаёт команда G90?',
@@ -681,6 +703,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 29,
     category: 'G',
     topic: 'positioning',
+    code: 'G91',
     prompt: {
       en: 'What does G91 specify?',
       ru: 'Что задаёт команда G91?',
@@ -701,6 +724,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 30,
     category: 'G',
     topic: 'feed-mode',
+    code: 'G94',
     prompt: {
       en: 'What feed mode does G94 set?',
       ru: 'Какой режим подачи задаёт G94?',
@@ -721,6 +745,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 31,
     category: 'G',
     topic: 'feed-mode',
+    code: 'G95',
     prompt: {
       en: 'What feed mode does G95 set?',
       ru: 'Какой режим подачи задаёт G95?',
@@ -741,6 +766,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 32,
     category: 'G',
     topic: 'spindle',
+    code: 'G96',
     prompt: {
       en: 'What does G96 activate on a CNC lathe?',
       ru: 'Что включает G96 на токарном станке с ЧПУ?',
@@ -764,6 +790,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 33,
     category: 'G',
     topic: 'spindle',
+    code: 'G97',
     prompt: {
       en: 'What does G97 do?',
       ru: 'Что делает G97?',
@@ -790,6 +817,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 34,
     category: 'M',
     topic: 'program-control',
+    code: 'M00',
     prompt: {
       en: 'What does M00 do?',
       ru: 'Что делает M00?',
@@ -813,6 +841,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 35,
     category: 'M',
     topic: 'program-control',
+    code: 'M01',
     prompt: {
       en: 'What does M01 do?',
       ru: 'Что делает M01?',
@@ -836,6 +865,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 36,
     category: 'M',
     topic: 'program-control',
+    code: 'M02',
     prompt: {
       en: 'What does M02 do?',
       ru: 'Что делает M02?',
@@ -862,6 +892,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 37,
     category: 'M',
     topic: 'spindle',
+    code: 'M04',
     prompt: {
       en: 'What does M04 command?',
       ru: 'Что задаёт команда M04?',
@@ -888,6 +919,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 38,
     category: 'M',
     topic: 'tool-change',
+    code: 'M06',
     prompt: {
       en: 'What does M06 command?',
       ru: 'Что задаёт команда M06?',
@@ -908,6 +940,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 39,
     category: 'M',
     topic: 'coolant',
+    code: 'M08',
     prompt: {
       en: 'What does M08 do?',
       ru: 'Что делает M08?',
@@ -928,6 +961,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 40,
     category: 'M',
     topic: 'coolant',
+    code: 'M09',
     prompt: {
       en: 'What does M09 do?',
       ru: 'Что делает M09?',
@@ -948,6 +982,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 41,
     category: 'M',
     topic: 'subprogram',
+    code: 'M98',
     prompt: {
       en: 'What does M98 do?',
       ru: 'Что делает M98?',
@@ -968,6 +1003,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 42,
     category: 'M',
     topic: 'subprogram',
+    code: 'M99',
     prompt: {
       en: 'What does M99 do?',
       ru: 'Что делает M99?',
@@ -991,6 +1027,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 43,
     category: 'G',
     topic: 'work-offset',
+    code: 'G53',
     prompt: {
       en: 'What does G53 do?',
       ru: 'Что делает G53?',
@@ -1020,6 +1057,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 44,
     category: 'G',
     topic: 'work-offset',
+    code: 'G52',
     prompt: {
       en: 'What does G52 set up?',
       ru: 'Что настраивает G52?',
@@ -1043,6 +1081,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 45,
     category: 'G',
     topic: 'motion',
+    code: 'G61',
     prompt: {
       en: 'What does G61 (exact stop check) do?',
       ru: 'Что делает G61 (точная остановка)?',
@@ -1075,6 +1114,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 46,
     category: 'G',
     topic: 'motion',
+    code: 'G64',
     prompt: {
       en: 'What does G64 do?',
       ru: 'Что делает G64?',
@@ -1101,6 +1141,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 47,
     category: 'G',
     topic: 'coordinate-system',
+    code: 'G68',
     prompt: {
       en: 'What does G68 activate?',
       ru: 'Что включает G68?',
@@ -1124,6 +1165,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 48,
     category: 'G',
     topic: 'coordinate-system',
+    code: 'G69',
     prompt: {
       en: 'What does G69 do?',
       ru: 'Что делает G69?',
@@ -1183,6 +1225,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 50,
     category: 'G',
     topic: 'canned-cycle',
+    code: 'G74',
     prompt: {
       en: 'What is G74 used for?',
       ru: 'Для чего используется G74?',
@@ -1206,6 +1249,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 51,
     category: 'G',
     topic: 'canned-cycle',
+    code: 'G76',
     prompt: {
       en: 'What does the G76 fine boring cycle add compared to a basic boring cycle?',
       ru: 'Что добавляет цикл точного растачивания G76 по сравнению с базовым циклом растачивания?',
@@ -1238,6 +1282,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 52,
     category: 'G',
     topic: 'canned-cycle',
+    code: 'G85',
     prompt: {
       en: 'What does G85 do?',
       ru: 'Что делает G85?',
@@ -1264,6 +1309,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 53,
     category: 'G',
     topic: 'canned-cycle',
+    code: 'G86',
     prompt: {
       en: 'What does G86 do?',
       ru: 'Что делает G86?',
@@ -1293,6 +1339,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 54,
     category: 'G',
     topic: 'measurement',
+    code: 'G31',
     prompt: {
       en: 'What is G31 used for?',
       ru: 'Для чего используется G31?',
@@ -1319,6 +1366,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 55,
     category: 'G',
     topic: 'motion',
+    code: 'G33',
     prompt: {
       en: 'What does G33 do on a CNC lathe?',
       ru: 'Что делает G33 на токарном станке с ЧПУ?',
@@ -1351,6 +1399,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 56,
     category: 'G',
     topic: 'work-offset',
+    code: 'G10',
     prompt: {
       en: 'What is G10 used for?',
       ru: 'Для чего используется G10?',
@@ -1377,6 +1426,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 57,
     category: 'M',
     topic: 'coolant',
+    code: 'M07',
     prompt: {
       en: 'What does M07 typically turn on?',
       ru: 'Что обычно включает M07?',
@@ -1397,6 +1447,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 58,
     category: 'M',
     topic: 'spindle',
+    code: 'M19',
     prompt: {
       en: 'What does M19 do?',
       ru: 'Что делает M19?',
@@ -1426,6 +1477,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 59,
     category: 'M',
     topic: 'feed-mode',
+    code: 'M48',
     prompt: {
       en: 'What does M48 do?',
       ru: 'Что делает M48?',
@@ -1449,6 +1501,7 @@ export const quizQuestions: QuizQuestion[] = [
     id: 60,
     category: 'M',
     topic: 'feed-mode',
+    code: 'M49',
     prompt: {
       en: 'What does M49 do?',
       ru: 'Что делает M49?',
