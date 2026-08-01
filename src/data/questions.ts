@@ -1172,8 +1172,8 @@ export const quizQuestions: QuizQuestion[] = [
     },
     options: [
       {
-        en: 'Cancels coordinate system rotation (G68)',
-        ru: 'Отменяет поворот системы координат (G68)',
+        en: 'Cancels coordinate system rotation',
+        ru: 'Отменяет поворот системы координат',
       },
       {
         en: 'Starts coordinate system rotation',
