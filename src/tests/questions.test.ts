@@ -43,4 +43,17 @@ describe('quiz question selection', () => {
       }
     }
   });
+
+  // Reverse mode derives its prompt from the correct option's text (see
+  // buildSessionQuestion), so a forward question's options must be real
+  // definitions, never raw G/M code strings, or reverse mode ends up asking
+  // the user to match a code to itself.
+  it('never uses a raw G/M code string as an option (reverse mode would break)', () => {
+    const codePattern = /^[GM]\d+(\.\d+)?$/;
+    for (const question of quizQuestions) {
+      for (const option of question.options) {
+        expect(option.en).not.toMatch(codePattern);
+      }
+    }
+  });
 });

@@ -71,14 +71,20 @@ export const quizQuestions: QuizQuestion[] = [
     topic: 'spindle',
     code: 'M05',
     prompt: {
-      en: 'Which command typically stops the spindle?',
-      ru: 'Какая команда обычно останавливает шпиндель?',
+      en: 'What does M05 do?',
+      ru: 'Что делает M05?',
     },
     options: [
-      { en: 'M03', ru: 'M03' },
-      { en: 'M05', ru: 'M05' },
-      { en: 'G21', ru: 'G21' },
-      { en: 'G17', ru: 'G17' },
+      {
+        en: 'Starts the spindle clockwise',
+        ru: 'Запускает шпиндель по часовой стрелке',
+      },
+      { en: 'Stops the spindle', ru: 'Останавливает шпиндель' },
+      {
+        en: 'Switches to metric units',
+        ru: 'Переключает на метрические единицы',
+      },
+      { en: 'Selects the XY plane', ru: 'Выбирает плоскость XY' },
     ],
     correctAnswer: 1,
     explanation: {
@@ -183,14 +189,23 @@ export const quizQuestions: QuizQuestion[] = [
     topic: 'program-control',
     code: 'M30',
     prompt: {
-      en: 'Which code is used to end a CNC program?',
-      ru: 'Какой код используется для завершения программы ЧПУ?',
+      en: 'What does M30 do?',
+      ru: 'Что делает M30?',
     },
     options: [
-      { en: 'M02', ru: 'M02' },
-      { en: 'M30', ru: 'M30' },
-      { en: 'M06', ru: 'M06' },
-      { en: 'G28', ru: 'G28' },
+      {
+        en: 'Ends the program without rewinding',
+        ru: 'Завершает программу без перемотки',
+      },
+      {
+        en: 'Ends the program and rewinds/resets',
+        ru: 'Завершает программу с перемоткой/сбросом',
+      },
+      { en: 'Changes the tool', ru: 'Меняет инструмент' },
+      {
+        en: 'Returns to the machine reference (home) position',
+        ru: 'Возвращается в исходную (нулевую) точку станка',
+      },
     ],
     correctAnswer: 1,
     explanation: {
