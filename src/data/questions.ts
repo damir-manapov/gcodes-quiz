@@ -590,7 +590,7 @@ export const quizQuestions: QuizQuestion[] = [
     },
     options: [
       { en: 'Simple drilling cycle', ru: 'Простой цикл сверления' },
-      { en: 'Peck drilling cycle', ru: 'Цикл прерывистого сверления (пекинг)' },
+      { en: 'Peck drilling cycle', ru: 'Цикл прерывистого сверления' },
       { en: 'Tapping cycle', ru: 'Цикл нарезания резьбы' },
       { en: 'Boring cycle with dwell', ru: 'Цикл растачивания с выдержкой' },
     ],
