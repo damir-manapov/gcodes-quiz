@@ -1521,6 +1521,567 @@ export const quizQuestions: QuizQuestion[] = [
       ru: 'M49 отключает корректоры подачи и скорости шпинделя, заставляя станок работать на запрограммированных значениях независимо от настроек на пульте.',
     },
   },
+  {
+    id: 61,
+    category: 'G',
+    topic: 'motion',
+    code: 'G09',
+    prompt: {
+      en: 'What does G09 do?',
+      ru: 'Что делает G09?',
+    },
+    options: [
+      {
+        en: 'Exact stop check for a single block only (non-modal)',
+        ru: 'Точная остановка только для одного кадра (немодально)',
+      },
+      {
+        en: 'Activates exact stop check as a modal, persistent state',
+        ru: 'Включает точную остановку как модальное, постоянное состояние',
+      },
+      {
+        en: 'Cancels tool length compensation',
+        ru: 'Отменяет коррекцию на длину инструмента',
+      },
+      {
+        en: 'Selects continuous path mode for all following blocks',
+        ru: 'Включает непрерывный режим обработки для всех последующих кадров',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G09 forces an exact stop check for only the block it appears in, without changing the modal path-control mode set by G61 or G64.',
+      ru: 'G09 задаёт точную остановку только для того кадра, в котором указана, не изменяя модальный режим управления траекторией, заданный G61 или G64.',
+    },
+  },
+  {
+    id: 62,
+    category: 'G',
+    topic: 'homing',
+    code: 'G27',
+    prompt: {
+      en: 'What does G27 do?',
+      ru: 'Что делает G27?',
+    },
+    options: [
+      {
+        en: 'Moves to the reference point and alarms if the machine does not arrive there exactly',
+        ru: 'Перемещается в исходную точку и выдаёт сигнал тревоги, если станок не приходит туда точно',
+      },
+      {
+        en: 'Returns to the reference point without any position check',
+        ru: 'Возвращается в исходную точку без проверки позиции',
+      },
+      {
+        en: 'Moves to a secondary (2nd/3rd/4th) reference point',
+        ru: 'Перемещается во вторую (2-ю/3-ю/4-ю) исходную точку',
+      },
+      {
+        en: 'Cancels reference point return',
+        ru: 'Отменяет возврат в исходную точку',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G27 sends the machine to the reference (home) position and checks that it actually arrives there exactly, raising an alarm if it does not, unlike G28 which performs no such check.',
+      ru: 'G27 направляет станок в исходную точку и проверяет, что он действительно приходит туда точно, выдавая сигнал тревоги в противном случае — в отличие от G28, которая такой проверки не выполняет.',
+    },
+  },
+  {
+    id: 63,
+    category: 'G',
+    topic: 'homing',
+    code: 'G29',
+    prompt: {
+      en: 'What does G29 do?',
+      ru: 'Что делает G29?',
+    },
+    options: [
+      {
+        en: 'Moves from the reference position to a specified point via the intermediate point used by the preceding G28',
+        ru: 'Перемещается из исходной точки в заданную точку через промежуточную точку, использованную предыдущей командой G28',
+      },
+      {
+        en: 'Moves to the reference (home) position',
+        ru: 'Перемещается в исходную (нулевую) точку',
+      },
+      {
+        en: 'Checks that the machine reached the reference point',
+        ru: 'Проверяет, что станок достиг исходной точки',
+      },
+      {
+        en: 'Moves to a secondary reference point',
+        ru: 'Перемещается во вторую исходную точку',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G29 moves the machine from the reference position to a specified point, passing through the same intermediate point used by the G28 that preceded it. It is typically used right after a G28 to return toward the work.',
+      ru: 'G29 перемещает станок из исходной точки в заданную точку через ту же промежуточную точку, что использовалась предшествующей командой G28. Обычно применяется сразу после G28 для возврата к детали.',
+    },
+  },
+  {
+    id: 64,
+    category: 'G',
+    topic: 'homing',
+    code: 'G30',
+    prompt: {
+      en: 'What does G30 do?',
+      ru: 'Что делает G30?',
+    },
+    options: [
+      {
+        en: 'Returns the machine to a secondary reference point (2nd, 3rd or 4th), selected via a P address',
+        ru: 'Возвращает станок во вторую исходную точку (2-ю, 3-ю или 4-ю), выбираемую адресом P',
+      },
+      {
+        en: 'Returns to the primary machine reference point',
+        ru: 'Возвращает станок в основную исходную точку',
+      },
+      {
+        en: 'Sets a new work coordinate system',
+        ru: 'Задаёт новую систему координат детали',
+      },
+      {
+        en: 'Cancels canned cycles',
+        ru: 'Отменяет постоянные циклы',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G30 returns the machine to one of the secondary reference points (2nd, 3rd, or 4th), chosen with a P address, as opposed to G28 which returns to the primary reference point.',
+      ru: 'G30 возвращает станок в одну из вторых исходных точек (2-ю, 3-ю или 4-ю), выбираемую адресом P, в отличие от G28, которая возвращает в основную исходную точку.',
+    },
+  },
+  {
+    id: 65,
+    category: 'G',
+    topic: 'coordinate-system',
+    code: 'G50',
+    prompt: {
+      en: 'What does G50 do?',
+      ru: 'Что делает G50?',
+    },
+    options: [
+      {
+        en: 'Cancels scaling, returning to programmed (1:1) dimensions',
+        ru: 'Отменяет масштабирование, возвращая программные (1:1) размеры',
+      },
+      {
+        en: 'Activates scaling of programmed dimensions by a specified factor',
+        ru: 'Включает масштабирование программных размеров на заданный коэффициент',
+      },
+      {
+        en: 'Activates coordinate system rotation',
+        ru: 'Включает поворот системы координат',
+      },
+      {
+        en: 'Sets a local coordinate system',
+        ru: 'Задаёт локальную систему координат',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G50 cancels scaling activated by G51, returning subsequent moves to programmed, unscaled (1:1) dimensions.',
+      ru: 'G50 отменяет масштабирование, включённое командой G51, возвращая последующие перемещения к программным, немасштабированным (1:1) размерам.',
+    },
+  },
+  {
+    id: 66,
+    category: 'G',
+    topic: 'coordinate-system',
+    code: 'G51',
+    prompt: {
+      en: 'What does G51 do?',
+      ru: 'Что делает G51?',
+    },
+    options: [
+      {
+        en: 'Scales programmed dimensions from a defined center point by a specified factor',
+        ru: 'Масштабирует программные размеры относительно заданного центра на указанный коэффициент',
+      },
+      {
+        en: 'Cancels scaling',
+        ru: 'Отменяет масштабирование',
+      },
+      {
+        en: 'Activates coordinate system rotation',
+        ru: 'Включает поворот системы координат',
+      },
+      {
+        en: 'Sets a local coordinate system',
+        ru: 'Задаёт локальную систему координат',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G51 activates scaling, multiplying programmed dimensions measured from a defined center point by a specified factor, letting a part be enlarged or shrunk without rewriting coordinates. G50 cancels it.',
+      ru: 'G51 включает масштабирование, умножая программные размеры, отсчитываемые от заданного центра, на указанный коэффициент, позволяя увеличить или уменьшить деталь без переписывания координат. G50 отменяет масштабирование.',
+    },
+  },
+  {
+    id: 67,
+    category: 'G',
+    topic: 'motion',
+    code: 'G62',
+    prompt: {
+      en: 'What does G62 (automatic corner override) do?',
+      ru: 'Что делает G62 (автоматическая коррекция подачи на углах)?',
+    },
+    options: [
+      {
+        en: 'Automatically reduces feed rate at inside corners while cutter compensation is active, to avoid tool overload',
+        ru: 'Автоматически снижает подачу на внутренних углах при активной коррекции на радиус фрезы, чтобы избежать перегрузки инструмента',
+      },
+      {
+        en: 'Increases feed rate at corners',
+        ru: 'Увеличивает подачу на углах',
+      },
+      {
+        en: 'Rounds corners for smoother motion',
+        ru: 'Скругляет углы для более плавного движения',
+      },
+      {
+        en: 'Cancels cutter compensation',
+        ru: 'Отменяет коррекцию на радиус фрезы',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G62 automatically reduces feed rate at inside corners while cutter radius compensation is active, preventing excess chip load and tool overload at those corners.',
+      ru: 'G62 автоматически снижает подачу на внутренних углах при активной коррекции на радиус фрезы, предотвращая избыточную нагрузку на инструмент в этих углах.',
+    },
+  },
+  {
+    id: 68,
+    category: 'G',
+    topic: 'motion',
+    code: 'G63',
+    prompt: {
+      en: 'What does G63 (tapping mode) do?',
+      ru: 'Что делает G63 (режим нарезания резьбы)?',
+    },
+    options: [
+      {
+        en: 'Switches to tapping mode, disabling feed and speed overrides and feed hold during the tap cycle',
+        ru: 'Включает режим нарезания резьбы, отключая корректоры подачи и скорости, а также стоп подачи на время цикла нарезания',
+      },
+      {
+        en: 'Cancels a tapping cycle',
+        ru: 'Отменяет цикл нарезания резьбы',
+      },
+      {
+        en: 'Activates rigid tapping synchronization',
+        ru: 'Включает синхронизацию жёсткого нарезания резьбы',
+      },
+      {
+        en: 'Selects a boring canned cycle',
+        ru: 'Выбирает постоянный цикл растачивания',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G63 switches the control into tapping mode, disabling feed rate and spindle speed overrides and feed hold so the tap cycle runs without interruption, typically used with a floating tap holder rather than rigid tapping.',
+      ru: 'G63 переключает ЧПУ в режим нарезания резьбы, отключая корректоры подачи и скорости шпинделя, а также стоп подачи, чтобы цикл нарезания выполнялся без прерываний — обычно используется с плавающим патроном, а не при жёстком нарезании.',
+    },
+  },
+  {
+    id: 69,
+    category: 'G',
+    topic: 'subprogram',
+    code: 'G65',
+    prompt: {
+      en: 'What does G65 do?',
+      ru: 'Что делает G65?',
+    },
+    options: [
+      {
+        en: 'Calls a custom macro once, passing arguments to it like a parameterized subprogram',
+        ru: 'Однократно вызывает пользовательский макрос, передавая ему аргументы, как параметризованной подпрограмме',
+      },
+      {
+        en: 'Calls a macro automatically before every subsequent motion block, until cancelled',
+        ru: 'Автоматически вызывает макрос перед каждым последующим кадром перемещения, пока не будет отменено',
+      },
+      {
+        en: 'Calls a standard subprogram without argument passing',
+        ru: 'Вызывает обычную подпрограмму без передачи аргументов',
+      },
+      {
+        en: 'Cancels a modal macro call',
+        ru: 'Отменяет модальный вызов макроса',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G65 makes a single (non-modal) call to a custom macro, passing arguments through local variables, unlike M98 which calls a plain subprogram with no argument passing.',
+      ru: 'G65 выполняет однократный (немодальный) вызов пользовательского макроса, передавая аргументы через локальные переменные — в отличие от M98, которая вызывает обычную подпрограмму без передачи аргументов.',
+    },
+  },
+  {
+    id: 70,
+    category: 'G',
+    topic: 'subprogram',
+    code: 'G66',
+    prompt: {
+      en: 'What does G66 do?',
+      ru: 'Что делает G66?',
+    },
+    options: [
+      {
+        en: 'Calls a macro automatically before every subsequent motion block, until cancelled',
+        ru: 'Автоматически вызывает макрос перед каждым последующим кадром перемещения, пока не будет отменено',
+      },
+      {
+        en: 'Calls a macro exactly once',
+        ru: 'Вызывает макрос ровно один раз',
+      },
+      {
+        en: 'Cancels a modal macro call',
+        ru: 'Отменяет модальный вызов макроса',
+      },
+      {
+        en: 'Calls a standard subprogram',
+        ru: 'Вызывает обычную подпрограмму',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G66 sets up a modal macro call: the specified macro runs automatically before every subsequent motion block until cancelled by G67, unlike the single-shot call made by G65.',
+      ru: 'G66 задаёт модальный вызов макроса: указанный макрос автоматически выполняется перед каждым последующим кадром перемещения до отмены командой G67 — в отличие от однократного вызова G65.',
+    },
+  },
+  {
+    id: 71,
+    category: 'G',
+    topic: 'subprogram',
+    code: 'G67',
+    prompt: {
+      en: 'What does G67 do?',
+      ru: 'Что делает G67?',
+    },
+    options: [
+      {
+        en: 'Cancels the modal macro call started by G66',
+        ru: 'Отменяет модальный вызов макроса, начатый командой G66',
+      },
+      {
+        en: 'Starts a modal macro call',
+        ru: 'Запускает модальный вызов макроса',
+      },
+      {
+        en: 'Calls a macro once',
+        ru: 'Однократно вызывает макрос',
+      },
+      {
+        en: 'Cancels a canned cycle',
+        ru: 'Отменяет постоянный цикл',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G67 cancels the modal macro call activated by G66, so subsequent motion blocks execute normally without automatically invoking the macro.',
+      ru: 'G67 отменяет модальный вызов макроса, активированный командой G66, поэтому последующие кадры перемещения выполняются в обычном режиме без автоматического вызова макроса.',
+    },
+  },
+  {
+    id: 72,
+    category: 'G',
+    topic: 'coordinate-system',
+    code: 'G92',
+    prompt: {
+      en: 'What does G92 do on a milling machine control?',
+      ru: 'Что делает G92 в системе ЧПУ фрезерного станка?',
+    },
+    options: [
+      {
+        en: 'Presets the active coordinate system so the current tool position is assigned the specified coordinate values',
+        ru: 'Задаёт активную систему координат так, чтобы текущей позиции инструмента были присвоены указанные координаты',
+      },
+      {
+        en: 'Selects a stored work offset, like G54',
+        ru: 'Выбирает сохранённое рабочее смещение, как G54',
+      },
+      {
+        en: 'Returns to the machine reference position',
+        ru: 'Возвращается в исходную точку станка',
+      },
+      {
+        en: 'Cancels the local coordinate system',
+        ru: 'Отменяет локальную систему координат',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'On milling controls, G92 presets the coordinate system by assigning the specified coordinate values to the tool\u2019s current position, effectively shifting the whole coordinate system without moving the machine.',
+      ru: 'В системах ЧПУ фрезерных станков G92 задаёт систему координат, присваивая текущей позиции инструмента указанные значения координат, фактически смещая всю систему координат без перемещения станка.',
+    },
+  },
+  {
+    id: 73,
+    category: 'G',
+    topic: 'canned-cycle',
+    code: 'G98',
+    prompt: {
+      en: 'What does G98 do in a canned cycle?',
+      ru: 'Что делает G98 в постоянном цикле?',
+    },
+    options: [
+      {
+        en: 'Retracts to the initial Z level (the height before the cycle started) after each repetition',
+        ru: 'Возвращает на исходный уровень Z (высоту до начала цикла) после каждого повторения',
+      },
+      {
+        en: 'Retracts only to the R point after each repetition',
+        ru: 'Возвращает только на уровень точки R после каждого повторения',
+      },
+      {
+        en: 'Cancels the active canned cycle',
+        ru: 'Отменяет активный постоянный цикл',
+      },
+      {
+        en: 'Retracts to the machine reference point',
+        ru: 'Возвращает в исходную точку станка',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G98 sets canned cycles to retract to the initial Z level (the height the tool was at before the cycle began) after each repetition, which is safer around obstacles but slower than G99.',
+      ru: 'G98 задаёт возврат постоянных циклов на исходный уровень Z (высоту, на которой находился инструмент до начала цикла) после каждого повторения — это безопаснее при наличии препятствий, но медленнее, чем G99.',
+    },
+  },
+  {
+    id: 74,
+    category: 'G',
+    topic: 'canned-cycle',
+    code: 'G99',
+    prompt: {
+      en: 'What does G99 do in a canned cycle?',
+      ru: 'Что делает G99 в постоянном цикле?',
+    },
+    options: [
+      {
+        en: 'Retracts only to the R point (clearance plane) after each repetition, saving cycle time',
+        ru: 'Возвращает только на уровень точки R (плоскость безопасности) после каждого повторения, сокращая время цикла',
+      },
+      {
+        en: 'Retracts to the initial pre-cycle height after each repetition',
+        ru: 'Возвращает на исходную высоту до начала цикла после каждого повторения',
+      },
+      {
+        en: 'Cancels the canned cycle',
+        ru: 'Отменяет постоянный цикл',
+      },
+      {
+        en: 'Selects incremental positioning',
+        ru: 'Выбирает относительное позиционирование',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G99 sets canned cycles to retract only to the R point (clearance plane) after each repetition rather than the initial Z level, saving cycle time when that clearance is safe.',
+      ru: 'G99 задаёт возврат постоянных циклов только на уровень точки R (плоскость безопасности) после каждого повторения вместо исходного уровня Z, сокращая время цикла, если такого зазора достаточно.',
+    },
+  },
+  {
+    id: 75,
+    category: 'M',
+    topic: 'clamping',
+    code: 'M10',
+    prompt: {
+      en: 'What does M10 do?',
+      ru: 'Что делает M10?',
+    },
+    options: [
+      {
+        en: 'Engages a clamp, locking an axis, pallet, or fixture in place',
+        ru: 'Включает зажим, фиксируя ось, паллету или приспособление на месте',
+      },
+      {
+        en: 'Releases a previously engaged clamp',
+        ru: 'Освобождает ранее включённый зажим',
+      },
+      {
+        en: 'Starts the spindle',
+        ru: 'Запускает шпиндель',
+      },
+      {
+        en: 'Turns on coolant',
+        ru: 'Включает СОЖ',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'M10 engages a clamp, locking a rotary axis, pallet, or fixture in place so it stays fixed during machining. M11 releases it.',
+      ru: 'M10 включает зажим, фиксируя поворотную ось, паллету или приспособление на месте, чтобы оно оставалось неподвижным во время обработки. M11 освобождает зажим.',
+    },
+  },
+  {
+    id: 76,
+    category: 'M',
+    topic: 'clamping',
+    code: 'M11',
+    prompt: {
+      en: 'What does M11 do?',
+      ru: 'Что делает M11?',
+    },
+    options: [
+      {
+        en: 'Releases a previously engaged clamp',
+        ru: 'Освобождает ранее включённый зажим',
+      },
+      {
+        en: 'Engages a clamp',
+        ru: 'Включает зажим',
+      },
+      {
+        en: 'Stops the spindle',
+        ru: 'Останавливает шпиндель',
+      },
+      {
+        en: 'Ends the program',
+        ru: 'Завершает программу',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'M11 releases a clamp previously engaged by M10, typically done before indexing a rotary axis or changing a pallet or fixture.',
+      ru: 'M11 освобождает зажим, ранее включённый командой M10, обычно перед поворотом индексируемой оси или сменой паллеты либо приспособления.',
+    },
+  },
+  {
+    id: 77,
+    category: 'M',
+    topic: 'spindle',
+    code: 'M13',
+    prompt: {
+      en: 'What does M13 do?',
+      ru: 'Что делает M13?',
+    },
+    options: [
+      {
+        en: 'Starts the spindle clockwise and turns on coolant in a single command',
+        ru: 'Запускает шпиндель по часовой стрелке и включает СОЖ одной командой',
+      },
+      {
+        en: 'Starts the spindle counterclockwise and turns on coolant',
+        ru: 'Запускает шпиндель против часовой стрелки и включает СОЖ',
+      },
+      {
+        en: 'Stops the spindle and turns off coolant',
+        ru: 'Останавливает шпиндель и отключает СОЖ',
+      },
+      {
+        en: 'Starts the spindle clockwise only, without coolant',
+        ru: 'Запускает шпиндель только по часовой стрелке, без СОЖ',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'M13 combines M03 (spindle clockwise) and M08 (coolant on) into a single command, saving a block when both are needed together.',
+      ru: 'M13 объединяет M03 (шпиндель по часовой стрелке) и M08 (включение СОЖ) в одну команду, экономя кадр программы, когда нужны обе функции одновременно.',
+    },
+  },
 ];
 
 export function getQuestionsForQuiz(
