@@ -1862,8 +1862,8 @@ export const quizQuestions: QuizQuestion[] = [
     },
     options: [
       {
-        en: 'Cancels the modal macro call started by G66',
-        ru: 'Отменяет модальный вызов макроса, начатый командой G66',
+        en: 'Cancels the modal macro call',
+        ru: 'Отменяет модальный вызов макроса',
       },
       {
         en: 'Starts a modal macro call',
