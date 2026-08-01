@@ -124,3 +124,5 @@ export const uiStrings = {
       'Не удалось импортировать ответы. Попробуйте ещё раз.',
   },
 } as const satisfies Record<Language, Record<string, unknown>>;
+
+export type UiStrings = (typeof uiStrings)[Language];

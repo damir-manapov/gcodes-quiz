@@ -65,33 +65,6 @@ function shuffle<T>(items: T[], random: () => number): T[] {
   return result;
 }
 
-function shuffleQuestionOptions(
-  question: QuizQuestion,
-  random: () => number,
-): QuizQuestion {
-  const pairs = question.options.map((text, index) => ({
-    text,
-    isCorrect: index === question.correctAnswer,
-  }));
-  const shuffledPairs = shuffle(pairs, random);
-  const correctAnswer = shuffledPairs.findIndex((pair) => pair.isCorrect);
-
-  return {
-    ...question,
-    options: shuffledPairs.map((pair) => pair.text),
-    correctAnswer,
-  };
-}
-
-export function shuffleQuizSession(
-  questions: QuizQuestion[],
-  random: () => number = Math.random,
-): QuizQuestion[] {
-  return shuffle(questions, random).map((question) =>
-    shuffleQuestionOptions(question, random),
-  );
-}
-
 const CODE_PATTERN = /\b([GM]\d{1,3}(?:\.\d)?)\b/g;
 
 // Returns the single G/M code a question is about, used to build the

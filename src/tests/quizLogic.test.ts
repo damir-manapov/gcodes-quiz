@@ -14,7 +14,6 @@ import {
   hashAnswerText,
   isCorrectAnswer,
   orderQuestions,
-  shuffleQuizSession,
 } from '../data/quizLogic';
 
 const questions: QuizQuestion[] = [
@@ -44,44 +43,6 @@ const questions: QuizQuestion[] = [
     explanation: { en: 'exp2', ru: 'оу2' },
   },
 ];
-
-describe('shuffleQuizSession', () => {
-  it('reorders questions and options using the injected random source', () => {
-    // Reversing shuffle: always swap with index 0.
-    const reverseRandom = () => 0;
-    const shuffled = shuffleQuizSession(questions, reverseRandom);
-    expect(shuffled).toHaveLength(questions.length);
-  });
-
-  it('keeps the correct answer text aligned after shuffling options', () => {
-    let call = 0;
-    const random = () => {
-      call += 1;
-      return call % 2 === 0 ? 0.9 : 0.1;
-    };
-    const shuffled = shuffleQuizSession(questions, random);
-    for (const question of shuffled) {
-      const original = questions.find((q) => q.id === question.id);
-      expect(original).toBeDefined();
-      if (!original) {
-        continue;
-      }
-      const originalCorrectText = original.options[original.correctAnswer];
-      expect(question.options[question.correctAnswer]).toBe(
-        originalCorrectText,
-      );
-      expect(question.options.map((o) => o.en).sort()).toEqual(
-        original.options.map((o) => o.en).sort(),
-      );
-    }
-  });
-
-  it('does not mutate the input array', () => {
-    const copy = questions.map((question) => ({ ...question }));
-    shuffleQuizSession(questions);
-    expect(questions).toEqual(copy);
-  });
-});
 
 describe('getProgressPercent', () => {
   it('returns 0 when there are no questions', () => {

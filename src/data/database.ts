@@ -1,6 +1,11 @@
 import * as SQLite from 'expo-sqlite';
-import type { Language, LocalizedText } from '../i18n';
+import type { Language } from '../i18n';
 import type { AnswersBackup } from './backupFormat';
+import {
+  mapAnswerRow,
+  mapQuestionRow,
+  toBackupAnswer,
+} from './databaseMappers';
 import { getQuestionsForQuiz, type QuizQuestion } from './questions';
 
 const DB_NAME = 'gcodes-quiz.db';
@@ -148,16 +153,7 @@ export async function getStoredQuestions(): Promise<QuizQuestion[]> {
     'SELECT id, prompt, options, correctAnswer, explanation, category, topic, code FROM questions ORDER BY id ASC',
   );
 
-  return rows.map((row) => ({
-    id: row.id,
-    prompt: JSON.parse(row.prompt) as LocalizedText,
-    options: JSON.parse(row.options) as LocalizedText[],
-    correctAnswer: row.correctAnswer,
-    explanation: JSON.parse(row.explanation) as LocalizedText,
-    category: row.category,
-    topic: row.topic,
-    ...(row.code ? { code: row.code } : {}),
-  }));
+  return rows.map(mapQuestionRow);
 }
 
 const DEFAULT_LANGUAGE: Language = 'en';
@@ -211,27 +207,14 @@ export async function getStoredAnswers(): Promise<StoredAnswer[]> {
     'SELECT id, questionId, selectedAnswer, isCorrect, answeredAt, answerHash FROM answers ORDER BY id ASC',
   );
 
-  return rows.map((row) => ({
-    id: row.id,
-    questionId: row.questionId,
-    selectedAnswer: row.selectedAnswer,
-    isCorrect: row.isCorrect === 1,
-    answeredAt: row.answeredAt,
-    answerHash: row.answerHash,
-  }));
+  return rows.map(mapAnswerRow);
 }
 
 export async function exportAnswersBackup(): Promise<AnswersBackup> {
   const answers = await getStoredAnswers();
   return {
     exportedAt: new Date().toISOString(),
-    answers: answers.map((answer) => ({
-      questionId: answer.questionId,
-      selectedAnswer: answer.selectedAnswer,
-      isCorrect: answer.isCorrect,
-      answeredAt: answer.answeredAt,
-      answerHash: answer.answerHash,
-    })),
+    answers: answers.map(toBackupAnswer),
   };
 }
 
