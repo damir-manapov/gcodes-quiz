@@ -110,7 +110,26 @@ export function computeHashCounts(
 type DistractorCandidate = {
   hash: string;
   text: LocalizedText;
+  isClose?: boolean;
 };
+
+// Extra weight given to a "close" code (see `areCodesClose`) when sampling
+// reverse-mode distractors, on top of the baseline weight of 1 shared by
+// every candidate and any weight earned from being picked before.
+const CLOSE_CODE_WEIGHT_BONUS = 2;
+
+// Two codes are "close" when they share a letter (G/M) and their numeric
+// part is within 2 of each other, e.g. G41 is close to G40, G42 and G43.
+// Used to make reverse-mode distractors more plausible/confusable rather
+// than pulling from completely unrelated codes.
+export function areCodesClose(a: string, b: string): boolean {
+  const matchA = a.match(/^([A-Z])(\d+)$/);
+  const matchB = b.match(/^([A-Z])(\d+)$/);
+  if (!matchA || !matchB || matchA[1] !== matchB[1]) {
+    return false;
+  }
+  return Math.abs(Number(matchA[2]) - Number(matchB[2])) <= 2;
+}
 
 // Picks `count` items from `candidates` without replacement, using
 // weighted-random sampling where higher-weight items are more likely (but
@@ -182,7 +201,8 @@ function buildForwardDistractorPool(
 }
 
 // Builds the pool of possible wrong codes for a reverse ("action -> code")
-// question: every other eligible question's code, deduplicated.
+// question: every other eligible question's code, deduplicated, tagged with
+// whether it's a "close" code so it can be weighted more heavily below.
 function buildReverseDistractorPool(
   question: QuizQuestion,
   allQuestions: QuizQuestion[],
@@ -200,7 +220,11 @@ function buildReverseDistractorPool(
       continue;
     }
     seen.add(otherCode);
-    pool.push({ hash: otherCode, text: { en: otherCode, ru: otherCode } });
+    pool.push({
+      hash: otherCode,
+      text: { en: otherCode, ru: otherCode },
+      isClose: areCodesClose(code, otherCode),
+    });
   }
 
   return pool;
@@ -209,11 +233,13 @@ function buildReverseDistractorPool(
 // Builds the question as it should be displayed in a quiz session: for
 // forward mode, shuffles in extra distractors pooled from the rest of the
 // question bank; for reverse mode, turns the prompt into the description of
-// the action and the options into G/M codes. In both cases, distractors the
-// user has selected more often in the past for this question are weighted
-// to appear more often (Laplace-smoothed so untried distractors still have a
-// baseline chance). Reverse-mode questions with no single identifiable code
-// are returned unchanged.
+// the action and the options into G/M codes. In both cases, every candidate
+// starts with a baseline weight (so a random code always has a chance),
+// which is then boosted for distractors the user has selected more often in
+// the past for this question, and, in reverse mode, for codes numerically
+// close to the correct one (e.g. G40/G42 as distractors for G41), since
+// those are the most plausible mix-ups. Reverse-mode questions with no
+// single identifiable code are returned unchanged.
 export function buildSessionQuestion(
   question: QuizQuestion,
   allQuestions: QuizQuestion[],
@@ -223,7 +249,9 @@ export function buildSessionQuestion(
   random: () => number = Math.random,
 ): QuizQuestion {
   const weightOf = (candidate: DistractorCandidate) =>
-    1 + (hashCounts.get(`${question.id}:${candidate.hash}`) ?? 0);
+    1 +
+    (hashCounts.get(`${question.id}:${candidate.hash}`) ?? 0) +
+    (candidate.isClose ? CLOSE_CODE_WEIGHT_BONUS : 0);
 
   if (mode === 'reverse') {
     const code = getQuestionCode(question);

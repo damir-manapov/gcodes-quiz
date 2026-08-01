@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { QuizQuestion } from '../data/questions';
 import {
   type AnswerHistoryRecord,
+  areCodesClose,
   buildSessionQuestion,
   computeHashCounts,
   computeOverallStats,
@@ -301,6 +302,71 @@ describe('toReverseQuestion (via buildSessionQuestion in reverse mode)', () => {
     expect(buildSessionQuestion(conceptual, pool, 'reverse', noHistory)).toBe(
       conceptual,
     );
+  });
+});
+
+describe('areCodesClose', () => {
+  it('treats codes with the same letter and a small numeric gap as close', () => {
+    expect(areCodesClose('G41', 'G40')).toBe(true);
+    expect(areCodesClose('G41', 'G42')).toBe(true);
+    expect(areCodesClose('G41', 'G43')).toBe(true);
+  });
+
+  it('treats codes with a large numeric gap as not close', () => {
+    expect(areCodesClose('G41', 'G90')).toBe(false);
+  });
+
+  it('treats codes with different letters as not close regardless of number', () => {
+    expect(areCodesClose('G41', 'M41')).toBe(false);
+  });
+});
+
+describe('reverse mode weights numerically "close" codes as distractors', () => {
+  const makeCodeQuestion = (id: number, code: string): QuizQuestion => ({
+    id,
+    category: code.startsWith('G') ? 'G' : 'M',
+    topic: 'motion',
+    code,
+    prompt: { en: `What does ${code} do?`, ru: `Q ${code}` },
+    options: [{ en: code, ru: code }],
+    correctAnswer: 0,
+    explanation: { en: 'exp', ru: 'оу' },
+  });
+
+  // Same fixed distractor sources for every scenario below; only the
+  // target's code changes, which changes whether 'G40' counts as "close".
+  const distractorSources = [
+    makeCodeQuestion(101, 'M01'),
+    makeCodeQuestion(102, 'M02'),
+    makeCodeQuestion(103, 'G40'),
+    makeCodeQuestion(104, 'M04'),
+    makeCodeQuestion(105, 'M05'),
+  ];
+
+  it('picks the close code (G40) as a distractor for G41 over equally-positioned far codes', () => {
+    const target = makeCodeQuestion(200, 'G41');
+    const reversed = buildSessionQuestion(
+      target,
+      [target, ...distractorSources],
+      'reverse',
+      new Map(),
+      2,
+      () => 0.65,
+    );
+    expect(reversed.options.map((option) => option.en)).toContain('G40');
+  });
+
+  it('does not favor the same code (G40) once it is no longer close to the target (G90)', () => {
+    const target = makeCodeQuestion(200, 'G90');
+    const reversed = buildSessionQuestion(
+      target,
+      [target, ...distractorSources],
+      'reverse',
+      new Map(),
+      2,
+      () => 0.65,
+    );
+    expect(reversed.options.map((option) => option.en)).not.toContain('G40');
   });
 });
 
