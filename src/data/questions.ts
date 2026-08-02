@@ -2097,6 +2097,183 @@ export const quizQuestions: QuizQuestion[] = [
       ru: 'M13 объединяет M03 (шпиндель по часовой стрелке) и M08 (включение СОЖ) в одну команду, экономя кадр программы, когда нужны обе функции одновременно.',
     },
   },
+  {
+    id: 78,
+    category: 'G',
+    topic: 'canned-cycle',
+    code: 'G87',
+    prompt: {
+      en: 'What does G87 do?',
+      ru: 'Что делает G87?',
+    },
+    options: [
+      {
+        en: 'Back boring cycle, cutting a counterbore from the underside',
+        ru: 'Цикл обратного растачивания с обработкой раззенковки с обратной стороны',
+      },
+      {
+        en: 'Boring cycle with dwell and manual retract',
+        ru: 'Цикл растачивания с выдержкой и ручным отводом',
+      },
+      { en: 'Peck drilling cycle', ru: 'Цикл прерывистого сверления' },
+      { en: 'Rigid tapping cycle', ru: 'Цикл жёсткого нарезания резьбы' },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G87 is a back boring cycle: the spindle orients and shifts the tool away from center, positions it below the hole, then feeds upward to cut a counterbore on the underside of the workpiece.',
+      ru: 'G87 — цикл обратного растачивания: шпиндель ориентируется, инструмент смещается от центра, позиционируется под отверстием, а затем подаётся вверх для обработки раззенковки с обратной стороны заготовки.',
+    },
+  },
+  {
+    id: 79,
+    category: 'G',
+    topic: 'canned-cycle',
+    code: 'G88',
+    prompt: {
+      en: 'What does G88 do?',
+      ru: 'Что делает G88?',
+    },
+    options: [
+      {
+        en: 'Boring cycle that dwells, stops the spindle, and waits for a manual retract',
+        ru: 'Цикл растачивания с выдержкой, остановкой шпинделя и ожиданием ручного отвода',
+      },
+      {
+        en: 'Boring cycle that feeds out at the same rate as feeding in',
+        ru: 'Цикл растачивания с подачей на выходе, равной подаче на входе',
+      },
+      { en: 'Simple drilling cycle', ru: 'Простой цикл сверления' },
+      { en: 'Tapping cycle', ru: 'Цикл нарезания резьбы' },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G88 is a boring cycle: the tool feeds to the bottom of the hole, dwells, the spindle stops, and the operator retracts the tool manually before the cycle continues.',
+      ru: 'G88 — цикл растачивания: инструмент подаётся до дна отверстия, выдерживается пауза, шпиндель останавливается, и оператор вручную отводит инструмент перед продолжением цикла.',
+    },
+  },
+  {
+    id: 80,
+    category: 'G',
+    topic: 'canned-cycle',
+    code: 'G89',
+    prompt: {
+      en: 'How does G89 differ from G85?',
+      ru: 'Чем G89 отличается от G85?',
+    },
+    options: [
+      {
+        en: 'It adds a dwell at the bottom of the hole before feeding back out',
+        ru: 'Добавляет выдержку на дне отверстия перед подачей на выходе',
+      },
+      {
+        en: 'It stops the spindle at the bottom instead of feeding out',
+        ru: 'Останавливает шпиндель на дне вместо подачи на выходе',
+      },
+      {
+        en: 'It uses peck cycles to clear chips',
+        ru: 'Использует прерывистые циклы для удаления стружки',
+      },
+      { en: 'It requires a manual retract', ru: 'Требует ручного отвода' },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G89 is a boring cycle like G85 (feed in, feed out) but adds a dwell at the bottom of the hole for a cleaner finish.',
+      ru: 'G89 — цикл растачивания, как G85 (подача на входе и выходе), но с добавлением выдержки на дне отверстия для более чистой поверхности.',
+    },
+  },
+  {
+    id: 81,
+    category: 'M',
+    topic: 'spindle',
+    code: 'M14',
+    prompt: {
+      en: 'What does M14 do?',
+      ru: 'Что делает M14?',
+    },
+    options: [
+      {
+        en: 'Starts the spindle counterclockwise and turns on coolant in a single command',
+        ru: 'Запускает шпиндель против часовой стрелки и включает СОЖ одной командой',
+      },
+      {
+        en: 'Starts the spindle clockwise and turns on coolant',
+        ru: 'Запускает шпиндель по часовой стрелке и включает СОЖ',
+      },
+      {
+        en: 'Stops the spindle and turns off coolant',
+        ru: 'Останавливает шпиндель и отключает СОЖ',
+      },
+      {
+        en: 'Starts the spindle counterclockwise only, without coolant',
+        ru: 'Запускает шпиндель только против часовой стрелки, без СОЖ',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: "M14 combines M04 (spindle counterclockwise) and M08 (coolant on) into a single command, mirroring M13's combination of M03 and M08.",
+      ru: 'M14 объединяет M04 (шпиндель против часовой стрелки) и M08 (включение СОЖ) в одну команду, аналогично тому, как M13 объединяет M03 и M08.',
+    },
+  },
+  {
+    id: 82,
+    category: 'G',
+    topic: 'coordinate-system',
+    code: 'G15',
+    prompt: {
+      en: 'What does G15 do?',
+      ru: 'Что делает G15?',
+    },
+    options: [
+      {
+        en: 'Cancels polar coordinate command mode',
+        ru: 'Отменяет режим полярных координат',
+      },
+      {
+        en: 'Activates polar coordinate command mode',
+        ru: 'Включает режим полярных координат',
+      },
+      {
+        en: 'Cancels coordinate system rotation',
+        ru: 'Отменяет поворот системы координат',
+      },
+      { en: 'Cancels scaling', ru: 'Отменяет масштабирование' },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G15 cancels polar coordinate command mode, returning subsequent moves to standard Cartesian (X/Y) programming.',
+      ru: 'G15 отменяет режим полярных координат, возвращая последующие перемещения к стандартному программированию в декартовых координатах (X/Y).',
+    },
+  },
+  {
+    id: 83,
+    category: 'G',
+    topic: 'coordinate-system',
+    code: 'G16',
+    prompt: {
+      en: 'What does G16 do?',
+      ru: 'Что делает G16?',
+    },
+    options: [
+      {
+        en: 'Activates polar coordinate command mode',
+        ru: 'Включает режим полярных координат',
+      },
+      {
+        en: 'Cancels polar coordinate command mode',
+        ru: 'Отменяет режим полярных координат',
+      },
+      {
+        en: 'Activates coordinate system rotation',
+        ru: 'Включает поворот системы координат',
+      },
+      { en: 'Activates scaling', ru: 'Включает масштабирование' },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G16 activates polar coordinate command mode, letting subsequent moves be programmed as a radius and angle from the current work coordinate system origin instead of X/Y.',
+      ru: 'G16 включает режим полярных координат, позволяя задавать последующие перемещения радиусом и углом относительно начала текущей системы координат вместо X/Y.',
+    },
+  },
 ];
 
 export function getQuestionsForQuiz(

@@ -4,7 +4,7 @@ A React Native Expo app for practicing CNC G-code quiz questions offline with a 
 
 ## Features
 
-- Practice 75+ quiz questions covering common G and M codes, tagged by category and topic
+- Practice 80+ quiz questions covering common G and M codes, tagged by category and topic
 - Three quiz modes: Code → Meaning (what does this code do), Action → Code (pick which code performs this action), and Type the code (type the code from memory instead of picking from options)
 - English and Russian interface and quiz content, with a language toggle in the app
 - Choose how questions are ordered each session: random, weakest first, longest since answered, or least answered — tracked separately per quiz mode, so your Code → Meaning stats don't affect Action → Code ordering and vice versa
