@@ -463,6 +463,17 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G28 sends the machine to its reference (home) position, often via an intermediate point.',
       ru: 'G28 направляет станок в исходную (нулевую) точку, часто через промежуточную точку.',
     },
+    lineExample: {
+      prompt: {
+        en: 'Return to the machine reference position, passing through an intermediate point at X=0, Y=0, Z=0.',
+        ru: 'Вернитесь в исходную точку станка через промежуточную точку X=0, Y=0, Z=0.',
+      },
+      params: [
+        { letter: 'X', value: '0' },
+        { letter: 'Y', value: '0' },
+        { letter: 'Z', value: '0' },
+      ],
+    },
   },
   {
     id: 17,
@@ -1354,6 +1365,20 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G73 is a high-speed peck drilling cycle that retracts only a small amount to break chips between pecks, unlike G83 which fully retracts out of the hole.',
       ru: 'G73 — цикл высокоскоростного прерывистого сверления, при котором между проходами выполняется небольшой отвод для дробления стружки, в отличие от G83, где отвод полный.',
     },
+    lineExample: {
+      prompt: {
+        en: 'Peck-drill a hole at X=15, Y=10 with quick chip-breaking retracts. Retract plane R=2, hole depth Z=-30, peck depth Q=4, feed rate F=90.',
+        ru: 'Просверлите отверстие с быстрыми отводами для дробления стружки в точке X=15, Y=10. Плоскость отвода R=2, глубина отверстия Z=-30, глубина шага Q=4, подача F=90.',
+      },
+      params: [
+        { letter: 'X', value: '15' },
+        { letter: 'Y', value: '10' },
+        { letter: 'Z', value: '-30' },
+        { letter: 'R', value: '2' },
+        { letter: 'Q', value: '4' },
+        { letter: 'F', value: '90' },
+      ],
+    },
   },
   {
     id: 50,
@@ -1377,6 +1402,19 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: {
       en: 'G74 is a canned cycle for left-hand tapping, spinning the spindle counterclockwise while feeding in and reversing to back out.',
       ru: 'G74 — постоянный цикл нарезания левой резьбы: шпиндель вращается против часовой стрелки при входе и меняет направление при выходе.',
+    },
+    lineExample: {
+      prompt: {
+        en: 'Tap a left-hand thread at X=25, Y=0. Retract plane R=5, thread depth Z=-18, feed rate F=120 (matched to the thread pitch).',
+        ru: 'Нарежьте левую резьбу в точке X=25, Y=0. Плоскость отвода R=5, глубина резьбы Z=-18, подача F=120 (согласованная с шагом резьбы).',
+      },
+      params: [
+        { letter: 'X', value: '25' },
+        { letter: 'Y', value: '0' },
+        { letter: 'Z', value: '-18' },
+        { letter: 'R', value: '5' },
+        { letter: 'F', value: '120' },
+      ],
     },
   },
   {
@@ -1411,6 +1449,20 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G76 performs fine boring: at the bottom of the hole the spindle orients to a fixed angle and the tool shifts away from the bore wall before retracting, leaving a clean finish.',
       ru: 'G76 выполняет точное растачивание: на дне отверстия шпиндель ориентируется под фиксированным углом, инструмент отводится от стенки перед выходом, обеспечивая чистую поверхность.',
     },
+    lineExample: {
+      prompt: {
+        en: 'Fine-bore a hole at X=0, Y=0. Retract plane R=3, bore depth Z=-20, tool shift Q=0.5, feed rate F=50.',
+        ru: 'Выполните точное растачивание в точке X=0, Y=0. Плоскость отвода R=3, глубина растачивания Z=-20, смещение инструмента Q=0.5, подача F=50.',
+      },
+      params: [
+        { letter: 'X', value: '0' },
+        { letter: 'Y', value: '0' },
+        { letter: 'Z', value: '-20' },
+        { letter: 'R', value: '3' },
+        { letter: 'Q', value: '0.5' },
+        { letter: 'F', value: '50' },
+      ],
+    },
   },
   {
     id: 52,
@@ -1437,6 +1489,19 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: {
       en: 'G85 is a boring cycle that feeds into the hole and feeds back out at the same rate, giving a smoother bore finish than a rapid retract.',
       ru: 'G85 — цикл растачивания, при котором подача выполняется как при входе, так и при выходе из отверстия, что даёт более чистую поверхность, чем быстрый отвод.',
+    },
+    lineExample: {
+      prompt: {
+        en: 'Bore a hole at X=12, Y=8. Retract plane R=2, bore depth Z=-16, feed rate F=70.',
+        ru: 'Расточите отверстие в точке X=12, Y=8. Плоскость отвода R=2, глубина растачивания Z=-16, подача F=70.',
+      },
+      params: [
+        { letter: 'X', value: '12' },
+        { letter: 'Y', value: '8' },
+        { letter: 'Z', value: '-16' },
+        { letter: 'R', value: '2' },
+        { letter: 'F', value: '70' },
+      ],
     },
   },
   {
@@ -1467,6 +1532,19 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: {
       en: 'G86 is a boring cycle: the tool feeds to the bottom of the hole, the spindle stops, and the tool rapids out, which can leave a witness mark but is faster than G85.',
       ru: 'G86 — цикл растачивания: инструмент подаётся до дна отверстия, шпиндель останавливается, и инструмент быстро отводится; это быстрее G85, но может оставить след на поверхности.',
+    },
+    lineExample: {
+      prompt: {
+        en: 'Bore a hole at X=18, Y=6, stopping the spindle at the bottom before a rapid retract. Retract plane R=2, bore depth Z=-14, feed rate F=65.',
+        ru: 'Расточите отверстие в точке X=18, Y=6 с остановкой шпинделя на дне перед быстрым отводом. Плоскость отвода R=2, глубина растачивания Z=-14, подача F=65.',
+      },
+      params: [
+        { letter: 'X', value: '18' },
+        { letter: 'Y', value: '6' },
+        { letter: 'Z', value: '-14' },
+        { letter: 'R', value: '2' },
+        { letter: 'F', value: '65' },
+      ],
     },
   },
   {
@@ -2050,6 +2128,17 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'On milling controls, G92 presets the coordinate system by assigning the specified coordinate values to the tool\u2019s current position, effectively shifting the whole coordinate system without moving the machine.',
       ru: 'В системах ЧПУ фрезерных станков G92 задаёт систему координат, присваивая текущей позиции инструмента указанные значения координат, фактически смещая всю систему координат без перемещения станка.',
     },
+    lineExample: {
+      prompt: {
+        en: 'Preset the coordinate system so the tool\u2019s current position becomes X=0, Y=0, Z=0.',
+        ru: 'Задайте систему координат так, чтобы текущая позиция инструмента стала X=0, Y=0, Z=0.',
+      },
+      params: [
+        { letter: 'X', value: '0' },
+        { letter: 'Y', value: '0' },
+        { letter: 'Z', value: '0' },
+      ],
+    },
   },
   {
     id: 73,
@@ -2242,6 +2331,20 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G87 is a back boring cycle: the spindle orients and shifts the tool away from center, positions it below the hole, then feeds upward to cut a counterbore on the underside of the workpiece.',
       ru: 'G87 — цикл обратного растачивания: шпиндель ориентируется, инструмент смещается от центра, позиционируется под отверстием, а затем подаётся вверх для обработки раззенковки с обратной стороны заготовки.',
     },
+    lineExample: {
+      prompt: {
+        en: 'Back-bore a counterbore at X=0, Y=0. Retract plane R=-5, counterbore depth Z=-3, tool shift Q=3, feed rate F=40.',
+        ru: 'Выполните обратное растачивание в точке X=0, Y=0. Плоскость отвода R=-5, глубина раззенковки Z=-3, смещение инструмента Q=3, подача F=40.',
+      },
+      params: [
+        { letter: 'X', value: '0' },
+        { letter: 'Y', value: '0' },
+        { letter: 'Z', value: '-3' },
+        { letter: 'R', value: '-5' },
+        { letter: 'Q', value: '3' },
+        { letter: 'F', value: '40' },
+      ],
+    },
   },
   {
     id: 79,
@@ -2268,6 +2371,20 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: {
       en: 'G88 is a boring cycle: the tool feeds to the bottom of the hole, dwells, the spindle stops, and the operator retracts the tool manually before the cycle continues.',
       ru: 'G88 — цикл растачивания: инструмент подаётся до дна отверстия, выдерживается пауза, шпиндель останавливается, и оператор вручную отводит инструмент перед продолжением цикла.',
+    },
+    lineExample: {
+      prompt: {
+        en: 'Bore a hole at X=8, Y=8 with a dwell and manual retract at the bottom. Retract plane R=2, bore depth Z=-15, dwell time P=1000, feed rate F=55.',
+        ru: 'Расточите отверстие в точке X=8, Y=8 с выдержкой и ручным отводом на дне. Плоскость отвода R=2, глубина растачивания Z=-15, время выдержки P=1000, подача F=55.',
+      },
+      params: [
+        { letter: 'X', value: '8' },
+        { letter: 'Y', value: '8' },
+        { letter: 'Z', value: '-15' },
+        { letter: 'R', value: '2' },
+        { letter: 'P', value: '1000' },
+        { letter: 'F', value: '55' },
+      ],
     },
   },
   {
@@ -2298,6 +2415,20 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: {
       en: 'G89 is a boring cycle like G85 (feed in, feed out) but adds a dwell at the bottom of the hole for a cleaner finish.',
       ru: 'G89 — цикл растачивания, как G85 (подача на входе и выходе), но с добавлением выдержки на дне отверстия для более чистой поверхности.',
+    },
+    lineExample: {
+      prompt: {
+        en: 'Bore a hole at X=14, Y=4 with a dwell at the bottom. Retract plane R=2, bore depth Z=-18, dwell time P=750, feed rate F=60.',
+        ru: 'Расточите отверстие в точке X=14, Y=4 с выдержкой на дне. Плоскость отвода R=2, глубина растачивания Z=-18, время выдержки P=750, подача F=60.',
+      },
+      params: [
+        { letter: 'X', value: '14' },
+        { letter: 'Y', value: '4' },
+        { letter: 'Z', value: '-18' },
+        { letter: 'R', value: '2' },
+        { letter: 'P', value: '750' },
+        { letter: 'F', value: '60' },
+      ],
     },
   },
   {
