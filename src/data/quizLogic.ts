@@ -467,10 +467,13 @@ export function isCorrectAnswer(
   return answerIndex === question.correctAnswer;
 }
 
-// Trims and uppercases a typed code so minor formatting differences (extra
-// whitespace, lowercase letters) don't count against the user.
+// Trims and uppercases a typed code, and strips leading zeros from its
+// numeric part, so it's judged the way a real CNC controller reads it: G1
+// and G01 address the same command, as do G0 and G00.
 export function normalizeCode(text: string): string {
-  return text.trim().toUpperCase();
+  const trimmed = text.trim().toUpperCase();
+  const match = trimmed.match(/^([A-Z])0*(\d+(?:\.\d+)?)$/);
+  return match ? `${match[1]}${match[2]}` : trimmed;
 }
 
 export function isCorrectTypedAnswer(

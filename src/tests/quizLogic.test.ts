@@ -544,6 +544,11 @@ describe('normalizeCode / isCorrectTypedAnswer', () => {
     expect(isCorrectTypedAnswer(question, '  G54  ')).toBe(true);
   });
 
+  it('accepts leading zeros dropped, like a real CNC controller would', () => {
+    expect(isCorrectTypedAnswer(question, 'G54')).toBe(true);
+    expect(isCorrectTypedAnswer(question, 'g054')).toBe(true);
+  });
+
   it('rejects a wrong or empty code', () => {
     expect(isCorrectTypedAnswer(question, 'G55')).toBe(false);
     expect(isCorrectTypedAnswer(question, '')).toBe(false);
@@ -551,6 +556,13 @@ describe('normalizeCode / isCorrectTypedAnswer', () => {
 
   it('normalizes by trimming and uppercasing', () => {
     expect(normalizeCode(' g54 ')).toBe('G54');
+  });
+
+  it('normalizes away leading zeros in the numeric part', () => {
+    expect(normalizeCode('G01')).toBe('G1');
+    expect(normalizeCode('g1')).toBe('G1');
+    expect(normalizeCode('G00')).toBe('G0');
+    expect(normalizeCode('M009')).toBe('M9');
   });
 });
 
