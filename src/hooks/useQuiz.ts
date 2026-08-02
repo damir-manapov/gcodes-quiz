@@ -31,7 +31,7 @@ import { logError } from '../logger';
 // so it only includes the curated subset of questions that have one.
 function isEligibleForMode(question: QuizQuestion, mode: QuizMode): boolean {
   if (mode === 'line') {
-    return question.lineExample !== undefined;
+    return (question.lineExamples?.length ?? 0) > 0;
   }
   if (mode === 'reverse' || mode === 'typed') {
     return getQuestionCode(question) !== null;

@@ -1,5 +1,5 @@
 import type { LocalizedText } from '../i18n';
-import type { QuizCategory, QuizQuestion } from './questions';
+import type { LineExample, QuizCategory, QuizQuestion } from './questions';
 
 export type AnswerRecord = {
   questionId: number;
@@ -289,13 +289,17 @@ export function buildSessionQuestion(
   }
 
   if (mode === 'line') {
-    const lineExample = question.lineExample;
-    if (!lineExample) {
+    const lineExamples = question.lineExamples;
+    if (!lineExamples || lineExamples.length === 0) {
       return question;
     }
-    const expectedLine = buildExpectedLineText(question);
+    const lineExample = lineExamples[
+      Math.floor(random() * lineExamples.length)
+    ] as LineExample;
+    const sessionQuestion = { ...question, lineExample };
+    const expectedLine = buildExpectedLineText(sessionQuestion);
     return {
-      ...question,
+      ...sessionQuestion,
       prompt: lineExample.prompt,
       options: [{ en: expectedLine, ru: expectedLine }],
       correctAnswer: 0,

@@ -28,8 +28,13 @@ export type QuizQuestion = {
   // "action -> code" reverse quiz mode. Omitted for questions that aren't
   // about one specific code (conceptual questions).
   code?: string;
-  // Worked example used to build the "write the line" quiz mode. Only
-  // present for the curated subset of codes that take parameters.
+  // Worked examples used to build the "write the line" quiz mode; a random
+  // one is picked each time the question is presented. Only present for the
+  // curated subset of codes that take parameters.
+  lineExamples?: LineExample[];
+  // The example picked for the current session, set by `buildSessionQuestion`
+  // and read by `buildExpectedLineText`/`isCorrectLineAnswer`. Not present in
+  // the question bank itself.
   lineExample?: LineExample;
 };
 
@@ -57,17 +62,40 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G00 performs a rapid positioning move without cutting feed.',
       ru: 'G00 выполняет быстрое позиционирование без рабочей подачи.',
     },
-    lineExample: {
-      prompt: {
-        en: 'Rapidly move the tool to X=50, Y=25, Z=10.',
-        ru: 'Быстро переместите инструмент в точку X=50, Y=25, Z=10.',
+    lineExamples: [
+      {
+        prompt: {
+          en: 'Rapidly move the tool to X=50, Y=25, Z=10.',
+          ru: 'Быстро переместите инструмент в точку X=50, Y=25, Z=10.',
+        },
+        params: [
+          { letter: 'X', value: '50' },
+          { letter: 'Y', value: '25' },
+          { letter: 'Z', value: '10' },
+        ],
       },
-      params: [
-        { letter: 'X', value: '50' },
-        { letter: 'Y', value: '25' },
-        { letter: 'Z', value: '10' },
-      ],
-    },
+      {
+        prompt: {
+          en: 'Rapidly retract to the tool change position at X=0, Y=0, Z=100.',
+          ru: 'Быстро отведите в позицию смены инструмента X=0, Y=0, Z=100.',
+        },
+        params: [
+          { letter: 'X', value: '0' },
+          { letter: 'Y', value: '0' },
+          { letter: 'Z', value: '100' },
+        ],
+      },
+      {
+        prompt: {
+          en: 'Rapidly move the tool to X=-15, Y=60.',
+          ru: 'Быстро переместите инструмент в точку X=-15, Y=60.',
+        },
+        params: [
+          { letter: 'X', value: '-15' },
+          { letter: 'Y', value: '60' },
+        ],
+      },
+    ],
   },
   {
     id: 2,
@@ -92,17 +120,41 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G01 moves the tool in a straight line at the programmed feed rate.',
       ru: 'G01 перемещает инструмент по прямой линии с заданной рабочей подачей.',
     },
-    lineExample: {
-      prompt: {
-        en: 'Move the tool in a straight line to X=30, Y=-10 at a feed rate of F=200.',
-        ru: 'Переместите инструмент по прямой в точку X=30, Y=-10 с подачей F=200.',
+    lineExamples: [
+      {
+        prompt: {
+          en: 'Move the tool in a straight line to X=30, Y=-10 at a feed rate of F=200.',
+          ru: 'Переместите инструмент по прямой в точку X=30, Y=-10 с подачей F=200.',
+        },
+        params: [
+          { letter: 'X', value: '30' },
+          { letter: 'Y', value: '-10' },
+          { letter: 'F', value: '200' },
+        ],
       },
-      params: [
-        { letter: 'X', value: '30' },
-        { letter: 'Y', value: '-10' },
-        { letter: 'F', value: '200' },
-      ],
-    },
+      {
+        prompt: {
+          en: 'Feed straight down to Z=-5 at a feed rate of F=80 to start the cut.',
+          ru: 'Подайте прямо вниз до Z=-5 с подачей F=80, чтобы начать резание.',
+        },
+        params: [
+          { letter: 'Z', value: '-5' },
+          { letter: 'F', value: '80' },
+        ],
+      },
+      {
+        prompt: {
+          en: 'Move in a straight line to X=100, Y=45, Z=-2 at a feed rate of F=300.',
+          ru: 'Переместитесь по прямой в точку X=100, Y=45, Z=-2 с подачей F=300.',
+        },
+        params: [
+          { letter: 'X', value: '100' },
+          { letter: 'Y', value: '45' },
+          { letter: 'Z', value: '-2' },
+          { letter: 'F', value: '300' },
+        ],
+      },
+    ],
   },
   {
     id: 3,
@@ -278,19 +330,47 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G02 produces a clockwise circular (arc) move, typically defined with I/J/K or R parameters.',
       ru: 'G02 выполняет круговое (дуговое) перемещение по часовой стрелке, обычно задаётся параметрами I/J/K или R.',
     },
-    lineExample: {
-      prompt: {
-        en: 'Cut a clockwise arc ending at X=40, Y=0, with the arc center offset from the start at I=-20, J=0, feed rate F=150.',
-        ru: 'Выполните дугу по часовой стрелке до точки X=40, Y=0, со смещением центра дуги от начала I=-20, J=0, подача F=150.',
+    lineExamples: [
+      {
+        prompt: {
+          en: 'Cut a clockwise arc ending at X=40, Y=0, with the arc center offset from the start at I=-20, J=0, feed rate F=150.',
+          ru: 'Выполните дугу по часовой стрелке до точки X=40, Y=0, со смещением центра дуги от начала I=-20, J=0, подача F=150.',
+        },
+        params: [
+          { letter: 'X', value: '40' },
+          { letter: 'Y', value: '0' },
+          { letter: 'I', value: '-20' },
+          { letter: 'J', value: '0' },
+          { letter: 'F', value: '150' },
+        ],
       },
-      params: [
-        { letter: 'X', value: '40' },
-        { letter: 'Y', value: '0' },
-        { letter: 'I', value: '-20' },
-        { letter: 'J', value: '0' },
-        { letter: 'F', value: '150' },
-      ],
-    },
+      {
+        prompt: {
+          en: 'Cut a clockwise arc ending at X=0, Y=-30, with the arc center offset from the start at I=0, J=-30, feed rate F=120.',
+          ru: 'Выполните дугу по часовой стрелке до точки X=0, Y=-30, со смещением центра дуги от начала I=0, J=-30, подача F=120.',
+        },
+        params: [
+          { letter: 'X', value: '0' },
+          { letter: 'Y', value: '-30' },
+          { letter: 'I', value: '0' },
+          { letter: 'J', value: '-30' },
+          { letter: 'F', value: '120' },
+        ],
+      },
+      {
+        prompt: {
+          en: 'Cut a clockwise arc ending at X=25, Y=25, with the arc center offset from the start at I=25, J=0, feed rate F=100.',
+          ru: 'Выполните дугу по часовой стрелке до точки X=25, Y=25, со смещением центра дуги от начала I=25, J=0, подача F=100.',
+        },
+        params: [
+          { letter: 'X', value: '25' },
+          { letter: 'Y', value: '25' },
+          { letter: 'I', value: '25' },
+          { letter: 'J', value: '0' },
+          { letter: 'F', value: '100' },
+        ],
+      },
+    ],
   },
   {
     id: 10,
@@ -318,19 +398,47 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G03 produces a counterclockwise circular (arc) move.',
       ru: 'G03 выполняет круговое (дуговое) перемещение против часовой стрелки.',
     },
-    lineExample: {
-      prompt: {
-        en: 'Cut a counterclockwise arc ending at X=0, Y=40, with the arc center offset from the start at I=0, J=-20, feed rate F=150.',
-        ru: 'Выполните дугу против часовой стрелки до точки X=0, Y=40, со смещением центра дуги от начала I=0, J=-20, подача F=150.',
+    lineExamples: [
+      {
+        prompt: {
+          en: 'Cut a counterclockwise arc ending at X=0, Y=40, with the arc center offset from the start at I=0, J=-20, feed rate F=150.',
+          ru: 'Выполните дугу против часовой стрелки до точки X=0, Y=40, со смещением центра дуги от начала I=0, J=-20, подача F=150.',
+        },
+        params: [
+          { letter: 'X', value: '0' },
+          { letter: 'Y', value: '40' },
+          { letter: 'I', value: '0' },
+          { letter: 'J', value: '-20' },
+          { letter: 'F', value: '150' },
+        ],
       },
-      params: [
-        { letter: 'X', value: '0' },
-        { letter: 'Y', value: '40' },
-        { letter: 'I', value: '0' },
-        { letter: 'J', value: '-20' },
-        { letter: 'F', value: '150' },
-      ],
-    },
+      {
+        prompt: {
+          en: 'Cut a counterclockwise arc ending at X=-30, Y=0, with the arc center offset from the start at I=-30, J=0, feed rate F=120.',
+          ru: 'Выполните дугу против часовой стрелки до точки X=-30, Y=0, со смещением центра дуги от начала I=-30, J=0, подача F=120.',
+        },
+        params: [
+          { letter: 'X', value: '-30' },
+          { letter: 'Y', value: '0' },
+          { letter: 'I', value: '-30' },
+          { letter: 'J', value: '0' },
+          { letter: 'F', value: '120' },
+        ],
+      },
+      {
+        prompt: {
+          en: 'Cut a counterclockwise arc ending at X=20, Y=20, with the arc center offset from the start at I=0, J=20, feed rate F=100.',
+          ru: 'Выполните дугу против часовой стрелки до точки X=20, Y=20, со смещением центра дуги от начала I=0, J=20, подача F=100.',
+        },
+        params: [
+          { letter: 'X', value: '20' },
+          { letter: 'Y', value: '20' },
+          { letter: 'I', value: '0' },
+          { letter: 'J', value: '20' },
+          { letter: 'F', value: '100' },
+        ],
+      },
+    ],
   },
   {
     id: 11,
@@ -463,17 +571,37 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G28 sends the machine to its reference (home) position, often via an intermediate point.',
       ru: 'G28 направляет станок в исходную (нулевую) точку, часто через промежуточную точку.',
     },
-    lineExample: {
-      prompt: {
-        en: 'Return to the machine reference position, passing through an intermediate point at X=0, Y=0, Z=0.',
-        ru: 'Вернитесь в исходную точку станка через промежуточную точку X=0, Y=0, Z=0.',
+    lineExamples: [
+      {
+        prompt: {
+          en: 'Return to the machine reference position, passing through an intermediate point at X=0, Y=0, Z=0.',
+          ru: 'Вернитесь в исходную точку станка через промежуточную точку X=0, Y=0, Z=0.',
+        },
+        params: [
+          { letter: 'X', value: '0' },
+          { letter: 'Y', value: '0' },
+          { letter: 'Z', value: '0' },
+        ],
       },
-      params: [
-        { letter: 'X', value: '0' },
-        { letter: 'Y', value: '0' },
-        { letter: 'Z', value: '0' },
-      ],
-    },
+      {
+        prompt: {
+          en: 'Return to the machine reference point, passing through an intermediate point at X=50, Y=50, Z=0.',
+          ru: 'Вернитесь в исходную точку станка через промежуточную точку X=50, Y=50, Z=0.',
+        },
+        params: [
+          { letter: 'X', value: '50' },
+          { letter: 'Y', value: '50' },
+          { letter: 'Z', value: '0' },
+        ],
+      },
+      {
+        prompt: {
+          en: 'Return to the machine reference point, passing through an intermediate point at Z=100.',
+          ru: 'Вернитесь в исходную точку станка через промежуточную точку Z=100.',
+        },
+        params: [{ letter: 'Z', value: '100' }],
+      },
+    ],
   },
   {
     id: 17,
@@ -690,19 +818,47 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G81 is a basic drilling canned cycle: rapid to position, feed to depth, rapid retract.',
       ru: 'G81 — базовый цикл сверления: быстрый подвод, подача на глубину, быстрый отвод.',
     },
-    lineExample: {
-      prompt: {
-        en: 'Drill a hole at X=10, Y=5. Retract plane R=2, hole depth Z=-12, feed rate F=100.',
-        ru: 'Просверлите отверстие в точке X=10, Y=5. Плоскость отвода R=2, глубина отверстия Z=-12, подача F=100.',
+    lineExamples: [
+      {
+        prompt: {
+          en: 'Drill a hole at X=10, Y=5. Retract plane R=2, hole depth Z=-12, feed rate F=100.',
+          ru: 'Просверлите отверстие в точке X=10, Y=5. Плоскость отвода R=2, глубина отверстия Z=-12, подача F=100.',
+        },
+        params: [
+          { letter: 'X', value: '10' },
+          { letter: 'Y', value: '5' },
+          { letter: 'Z', value: '-12' },
+          { letter: 'R', value: '2' },
+          { letter: 'F', value: '100' },
+        ],
       },
-      params: [
-        { letter: 'X', value: '10' },
-        { letter: 'Y', value: '5' },
-        { letter: 'Z', value: '-12' },
-        { letter: 'R', value: '2' },
-        { letter: 'F', value: '100' },
-      ],
-    },
+      {
+        prompt: {
+          en: 'Drill a hole at X=0, Y=0. Retract plane R=3, hole depth Z=-8, feed rate F=120.',
+          ru: 'Просверлите отверстие в точке X=0, Y=0. Плоскость отвода R=3, глубина отверстия Z=-8, подача F=120.',
+        },
+        params: [
+          { letter: 'X', value: '0' },
+          { letter: 'Y', value: '0' },
+          { letter: 'Z', value: '-8' },
+          { letter: 'R', value: '3' },
+          { letter: 'F', value: '120' },
+        ],
+      },
+      {
+        prompt: {
+          en: 'Drill a hole at X=-20, Y=15. Retract plane R=5, hole depth Z=-20, feed rate F=90.',
+          ru: 'Просверлите отверстие в точке X=-20, Y=15. Плоскость отвода R=5, глубина отверстия Z=-20, подача F=90.',
+        },
+        params: [
+          { letter: 'X', value: '-20' },
+          { letter: 'Y', value: '15' },
+          { letter: 'Z', value: '-20' },
+          { letter: 'R', value: '5' },
+          { letter: 'F', value: '90' },
+        ],
+      },
+    ],
   },
   {
     id: 25,
@@ -733,20 +889,50 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G82 is a drilling cycle like G81 but adds a dwell at the bottom of the hole for a better finish.',
       ru: 'G82 — цикл сверления, как G81, но с выдержкой на дне отверстия для лучшего качества поверхности.',
     },
-    lineExample: {
-      prompt: {
-        en: 'Drill a hole with a dwell at the bottom at X=20, Y=15. Retract plane R=2, hole depth Z=-10, dwell time P=500, feed rate F=80.',
-        ru: 'Просверлите отверстие с выдержкой на дне в точке X=20, Y=15. Плоскость отвода R=2, глубина отверстия Z=-10, время выдержки P=500, подача F=80.',
+    lineExamples: [
+      {
+        prompt: {
+          en: 'Drill a hole with a dwell at the bottom at X=20, Y=15. Retract plane R=2, hole depth Z=-10, dwell time P=500, feed rate F=80.',
+          ru: 'Просверлите отверстие с выдержкой на дне в точке X=20, Y=15. Плоскость отвода R=2, глубина отверстия Z=-10, время выдержки P=500, подача F=80.',
+        },
+        params: [
+          { letter: 'X', value: '20' },
+          { letter: 'Y', value: '15' },
+          { letter: 'Z', value: '-10' },
+          { letter: 'R', value: '2' },
+          { letter: 'P', value: '500' },
+          { letter: 'F', value: '80' },
+        ],
       },
-      params: [
-        { letter: 'X', value: '20' },
-        { letter: 'Y', value: '15' },
-        { letter: 'Z', value: '-10' },
-        { letter: 'R', value: '2' },
-        { letter: 'P', value: '500' },
-        { letter: 'F', value: '80' },
-      ],
-    },
+      {
+        prompt: {
+          en: 'Drill a hole with a dwell at the bottom at X=0, Y=0. Retract plane R=3, hole depth Z=-6, dwell time P=300, feed rate F=100.',
+          ru: 'Просверлите отверстие с выдержкой на дне в точке X=0, Y=0. Плоскость отвода R=3, глубина отверстия Z=-6, время выдержки P=300, подача F=100.',
+        },
+        params: [
+          { letter: 'X', value: '0' },
+          { letter: 'Y', value: '0' },
+          { letter: 'Z', value: '-6' },
+          { letter: 'R', value: '3' },
+          { letter: 'P', value: '300' },
+          { letter: 'F', value: '100' },
+        ],
+      },
+      {
+        prompt: {
+          en: 'Drill a hole with a dwell at the bottom at X=-8, Y=12. Retract plane R=4, hole depth Z=-14, dwell time P=800, feed rate F=70.',
+          ru: 'Просверлите отверстие с выдержкой на дне в точке X=-8, Y=12. Плоскость отвода R=4, глубина отверстия Z=-14, время выдержки P=800, подача F=70.',
+        },
+        params: [
+          { letter: 'X', value: '-8' },
+          { letter: 'Y', value: '12' },
+          { letter: 'Z', value: '-14' },
+          { letter: 'R', value: '4' },
+          { letter: 'P', value: '800' },
+          { letter: 'F', value: '70' },
+        ],
+      },
+    ],
   },
   {
     id: 26,
@@ -774,20 +960,50 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G83 performs a peck drilling cycle, fully retracting between pecks to clear chips on deep holes.',
       ru: 'G83 выполняет цикл прерывистого сверления с полным отводом между проходами для удаления стружки из глубоких отверстий.',
     },
-    lineExample: {
-      prompt: {
-        en: 'Peck-drill a hole at X=5, Y=5. Retract plane R=3, hole depth Z=-25, peck depth Q=5, feed rate F=60.',
-        ru: 'Просверлите отверстие с прерывистой подачей в точке X=5, Y=5. Плоскость отвода R=3, глубина отверстия Z=-25, глубина шага Q=5, подача F=60.',
+    lineExamples: [
+      {
+        prompt: {
+          en: 'Peck-drill a hole at X=5, Y=5. Retract plane R=3, hole depth Z=-25, peck depth Q=5, feed rate F=60.',
+          ru: 'Просверлите отверстие с прерывистой подачей в точке X=5, Y=5. Плоскость отвода R=3, глубина отверстия Z=-25, глубина шага Q=5, подача F=60.',
+        },
+        params: [
+          { letter: 'X', value: '5' },
+          { letter: 'Y', value: '5' },
+          { letter: 'Z', value: '-25' },
+          { letter: 'R', value: '3' },
+          { letter: 'Q', value: '5' },
+          { letter: 'F', value: '60' },
+        ],
       },
-      params: [
-        { letter: 'X', value: '5' },
-        { letter: 'Y', value: '5' },
-        { letter: 'Z', value: '-25' },
-        { letter: 'R', value: '3' },
-        { letter: 'Q', value: '5' },
-        { letter: 'F', value: '60' },
-      ],
-    },
+      {
+        prompt: {
+          en: 'Peck-drill a hole at X=0, Y=0. Retract plane R=2, hole depth Z=-35, peck depth Q=6, feed rate F=70.',
+          ru: 'Просверлите отверстие с прерывистой подачей в точке X=0, Y=0. Плоскость отвода R=2, глубина отверстия Z=-35, глубина шага Q=6, подача F=70.',
+        },
+        params: [
+          { letter: 'X', value: '0' },
+          { letter: 'Y', value: '0' },
+          { letter: 'Z', value: '-35' },
+          { letter: 'R', value: '2' },
+          { letter: 'Q', value: '6' },
+          { letter: 'F', value: '70' },
+        ],
+      },
+      {
+        prompt: {
+          en: 'Peck-drill a hole at X=18, Y=-12. Retract plane R=4, hole depth Z=-45, peck depth Q=8, feed rate F=55.',
+          ru: 'Просверлите отверстие с прерывистой подачей в точке X=18, Y=-12. Плоскость отвода R=4, глубина отверстия Z=-45, глубина шага Q=8, подача F=55.',
+        },
+        params: [
+          { letter: 'X', value: '18' },
+          { letter: 'Y', value: '-12' },
+          { letter: 'Z', value: '-45' },
+          { letter: 'R', value: '4' },
+          { letter: 'Q', value: '8' },
+          { letter: 'F', value: '55' },
+        ],
+      },
+    ],
   },
   {
     id: 27,
@@ -809,19 +1025,47 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G84 is a canned cycle for tapping, synchronizing spindle rotation with feed to cut threads.',
       ru: 'G84 — постоянный цикл нарезания резьбы, синхронизирующий вращение шпинделя с подачей.',
     },
-    lineExample: {
-      prompt: {
-        en: 'Tap a hole at X=0, Y=0. Retract plane R=5, thread depth Z=-15, feed rate F=150 (matched to the thread pitch).',
-        ru: 'Нарежьте резьбу в точке X=0, Y=0. Плоскость отвода R=5, глубина резьбы Z=-15, подача F=150 (согласованная с шагом резьбы).',
+    lineExamples: [
+      {
+        prompt: {
+          en: 'Tap a hole at X=0, Y=0. Retract plane R=5, thread depth Z=-15, feed rate F=150 (matched to the thread pitch).',
+          ru: 'Нарежьте резьбу в точке X=0, Y=0. Плоскость отвода R=5, глубина резьбы Z=-15, подача F=150 (согласованная с шагом резьбы).',
+        },
+        params: [
+          { letter: 'X', value: '0' },
+          { letter: 'Y', value: '0' },
+          { letter: 'Z', value: '-15' },
+          { letter: 'R', value: '5' },
+          { letter: 'F', value: '150' },
+        ],
       },
-      params: [
-        { letter: 'X', value: '0' },
-        { letter: 'Y', value: '0' },
-        { letter: 'Z', value: '-15' },
-        { letter: 'R', value: '5' },
-        { letter: 'F', value: '150' },
-      ],
-    },
+      {
+        prompt: {
+          en: 'Tap a hole at X=20, Y=10. Retract plane R=4, thread depth Z=-18, feed rate F=175 (matched to the thread pitch).',
+          ru: 'Нарежьте резьбу в точке X=20, Y=10. Плоскость отвода R=4, глубина резьбы Z=-18, подача F=175 (согласованная с шагом резьбы).',
+        },
+        params: [
+          { letter: 'X', value: '20' },
+          { letter: 'Y', value: '10' },
+          { letter: 'Z', value: '-18' },
+          { letter: 'R', value: '4' },
+          { letter: 'F', value: '175' },
+        ],
+      },
+      {
+        prompt: {
+          en: 'Tap a hole at X=-15, Y=-5. Retract plane R=6, thread depth Z=-22, feed rate F=200 (matched to the thread pitch).',
+          ru: 'Нарежьте резьбу в точке X=-15, Y=-5. Плоскость отвода R=6, глубина резьбы Z=-22, подача F=200 (согласованная с шагом резьбы).',
+        },
+        params: [
+          { letter: 'X', value: '-15' },
+          { letter: 'Y', value: '-5' },
+          { letter: 'Z', value: '-22' },
+          { letter: 'R', value: '6' },
+          { letter: 'F', value: '200' },
+        ],
+      },
+    ],
   },
   {
     id: 28,
@@ -1365,20 +1609,50 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G73 is a high-speed peck drilling cycle that retracts only a small amount to break chips between pecks, unlike G83 which fully retracts out of the hole.',
       ru: 'G73 — цикл высокоскоростного прерывистого сверления, при котором между проходами выполняется небольшой отвод для дробления стружки, в отличие от G83, где отвод полный.',
     },
-    lineExample: {
-      prompt: {
-        en: 'Peck-drill a hole at X=15, Y=10 with quick chip-breaking retracts. Retract plane R=2, hole depth Z=-30, peck depth Q=4, feed rate F=90.',
-        ru: 'Просверлите отверстие с быстрыми отводами для дробления стружки в точке X=15, Y=10. Плоскость отвода R=2, глубина отверстия Z=-30, глубина шага Q=4, подача F=90.',
+    lineExamples: [
+      {
+        prompt: {
+          en: 'Peck-drill a hole at X=15, Y=10 with quick chip-breaking retracts. Retract plane R=2, hole depth Z=-30, peck depth Q=4, feed rate F=90.',
+          ru: 'Просверлите отверстие с быстрыми отводами для дробления стружки в точке X=15, Y=10. Плоскость отвода R=2, глубина отверстия Z=-30, глубина шага Q=4, подача F=90.',
+        },
+        params: [
+          { letter: 'X', value: '15' },
+          { letter: 'Y', value: '10' },
+          { letter: 'Z', value: '-30' },
+          { letter: 'R', value: '2' },
+          { letter: 'Q', value: '4' },
+          { letter: 'F', value: '90' },
+        ],
       },
-      params: [
-        { letter: 'X', value: '15' },
-        { letter: 'Y', value: '10' },
-        { letter: 'Z', value: '-30' },
-        { letter: 'R', value: '2' },
-        { letter: 'Q', value: '4' },
-        { letter: 'F', value: '90' },
-      ],
-    },
+      {
+        prompt: {
+          en: 'Peck-drill a deep hole at X=0, Y=0. Retract plane R=3, hole depth Z=-40, peck depth Q=3, feed rate F=110.',
+          ru: 'Просверлите глубокое отверстие в точке X=0, Y=0. Плоскость отвода R=3, глубина отверстия Z=-40, глубина шага Q=3, подача F=110.',
+        },
+        params: [
+          { letter: 'X', value: '0' },
+          { letter: 'Y', value: '0' },
+          { letter: 'Z', value: '-40' },
+          { letter: 'R', value: '3' },
+          { letter: 'Q', value: '3' },
+          { letter: 'F', value: '110' },
+        ],
+      },
+      {
+        prompt: {
+          en: 'Peck-drill a hole at X=22, Y=-8. Retract plane R=2, hole depth Z=-18, peck depth Q=5, feed rate F=100.',
+          ru: 'Просверлите отверстие в точке X=22, Y=-8. Плоскость отвода R=2, глубина отверстия Z=-18, глубина шага Q=5, подача F=100.',
+        },
+        params: [
+          { letter: 'X', value: '22' },
+          { letter: 'Y', value: '-8' },
+          { letter: 'Z', value: '-18' },
+          { letter: 'R', value: '2' },
+          { letter: 'Q', value: '5' },
+          { letter: 'F', value: '100' },
+        ],
+      },
+    ],
   },
   {
     id: 50,
@@ -1403,19 +1677,47 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G74 is a canned cycle for left-hand tapping, spinning the spindle counterclockwise while feeding in and reversing to back out.',
       ru: 'G74 — постоянный цикл нарезания левой резьбы: шпиндель вращается против часовой стрелки при входе и меняет направление при выходе.',
     },
-    lineExample: {
-      prompt: {
-        en: 'Tap a left-hand thread at X=25, Y=0. Retract plane R=5, thread depth Z=-18, feed rate F=120 (matched to the thread pitch).',
-        ru: 'Нарежьте левую резьбу в точке X=25, Y=0. Плоскость отвода R=5, глубина резьбы Z=-18, подача F=120 (согласованная с шагом резьбы).',
+    lineExamples: [
+      {
+        prompt: {
+          en: 'Tap a left-hand thread at X=25, Y=0. Retract plane R=5, thread depth Z=-18, feed rate F=120 (matched to the thread pitch).',
+          ru: 'Нарежьте левую резьбу в точке X=25, Y=0. Плоскость отвода R=5, глубина резьбы Z=-18, подача F=120 (согласованная с шагом резьбы).',
+        },
+        params: [
+          { letter: 'X', value: '25' },
+          { letter: 'Y', value: '0' },
+          { letter: 'Z', value: '-18' },
+          { letter: 'R', value: '5' },
+          { letter: 'F', value: '120' },
+        ],
       },
-      params: [
-        { letter: 'X', value: '25' },
-        { letter: 'Y', value: '0' },
-        { letter: 'Z', value: '-18' },
-        { letter: 'R', value: '5' },
-        { letter: 'F', value: '120' },
-      ],
-    },
+      {
+        prompt: {
+          en: 'Tap a left-hand thread at X=0, Y=10. Retract plane R=4, thread depth Z=-20, feed rate F=100 (matched to the thread pitch).',
+          ru: 'Нарежьте левую резьбу в точке X=0, Y=10. Плоскость отвода R=4, глубина резьбы Z=-20, подача F=100 (согласованная с шагом резьбы).',
+        },
+        params: [
+          { letter: 'X', value: '0' },
+          { letter: 'Y', value: '10' },
+          { letter: 'Z', value: '-20' },
+          { letter: 'R', value: '4' },
+          { letter: 'F', value: '100' },
+        ],
+      },
+      {
+        prompt: {
+          en: 'Tap a left-hand thread at X=-12, Y=6. Retract plane R=6, thread depth Z=-25, feed rate F=140 (matched to the thread pitch).',
+          ru: 'Нарежьте левую резьбу в точке X=-12, Y=6. Плоскость отвода R=6, глубина резьбы Z=-25, подача F=140 (согласованная с шагом резьбы).',
+        },
+        params: [
+          { letter: 'X', value: '-12' },
+          { letter: 'Y', value: '6' },
+          { letter: 'Z', value: '-25' },
+          { letter: 'R', value: '6' },
+          { letter: 'F', value: '140' },
+        ],
+      },
+    ],
   },
   {
     id: 51,
@@ -1449,20 +1751,50 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G76 performs fine boring: at the bottom of the hole the spindle orients to a fixed angle and the tool shifts away from the bore wall before retracting, leaving a clean finish.',
       ru: 'G76 выполняет точное растачивание: на дне отверстия шпиндель ориентируется под фиксированным углом, инструмент отводится от стенки перед выходом, обеспечивая чистую поверхность.',
     },
-    lineExample: {
-      prompt: {
-        en: 'Fine-bore a hole at X=0, Y=0. Retract plane R=3, bore depth Z=-20, tool shift Q=0.5, feed rate F=50.',
-        ru: 'Выполните точное растачивание в точке X=0, Y=0. Плоскость отвода R=3, глубина растачивания Z=-20, смещение инструмента Q=0.5, подача F=50.',
+    lineExamples: [
+      {
+        prompt: {
+          en: 'Fine-bore a hole at X=0, Y=0. Retract plane R=3, bore depth Z=-20, tool shift Q=0.5, feed rate F=50.',
+          ru: 'Выполните точное растачивание в точке X=0, Y=0. Плоскость отвода R=3, глубина растачивания Z=-20, смещение инструмента Q=0.5, подача F=50.',
+        },
+        params: [
+          { letter: 'X', value: '0' },
+          { letter: 'Y', value: '0' },
+          { letter: 'Z', value: '-20' },
+          { letter: 'R', value: '3' },
+          { letter: 'Q', value: '0.5' },
+          { letter: 'F', value: '50' },
+        ],
       },
-      params: [
-        { letter: 'X', value: '0' },
-        { letter: 'Y', value: '0' },
-        { letter: 'Z', value: '-20' },
-        { letter: 'R', value: '3' },
-        { letter: 'Q', value: '0.5' },
-        { letter: 'F', value: '50' },
-      ],
-    },
+      {
+        prompt: {
+          en: 'Fine-bore a hole at X=30, Y=15. Retract plane R=4, bore depth Z=-25, tool shift Q=0.3, feed rate F=40.',
+          ru: 'Выполните точное растачивание в точке X=30, Y=15. Плоскость отвода R=4, глубина растачивания Z=-25, смещение инструмента Q=0.3, подача F=40.',
+        },
+        params: [
+          { letter: 'X', value: '30' },
+          { letter: 'Y', value: '15' },
+          { letter: 'Z', value: '-25' },
+          { letter: 'R', value: '4' },
+          { letter: 'Q', value: '0.3' },
+          { letter: 'F', value: '40' },
+        ],
+      },
+      {
+        prompt: {
+          en: 'Fine-bore a hole at X=-10, Y=5. Retract plane R=2, bore depth Z=-12, tool shift Q=1, feed rate F=60.',
+          ru: 'Выполните точное растачивание в точке X=-10, Y=5. Плоскость отвода R=2, глубина растачивания Z=-12, смещение инструмента Q=1, подача F=60.',
+        },
+        params: [
+          { letter: 'X', value: '-10' },
+          { letter: 'Y', value: '5' },
+          { letter: 'Z', value: '-12' },
+          { letter: 'R', value: '2' },
+          { letter: 'Q', value: '1' },
+          { letter: 'F', value: '60' },
+        ],
+      },
+    ],
   },
   {
     id: 52,
@@ -1490,19 +1822,47 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G85 is a boring cycle that feeds into the hole and feeds back out at the same rate, giving a smoother bore finish than a rapid retract.',
       ru: 'G85 — цикл растачивания, при котором подача выполняется как при входе, так и при выходе из отверстия, что даёт более чистую поверхность, чем быстрый отвод.',
     },
-    lineExample: {
-      prompt: {
-        en: 'Bore a hole at X=12, Y=8. Retract plane R=2, bore depth Z=-16, feed rate F=70.',
-        ru: 'Расточите отверстие в точке X=12, Y=8. Плоскость отвода R=2, глубина растачивания Z=-16, подача F=70.',
+    lineExamples: [
+      {
+        prompt: {
+          en: 'Bore a hole at X=12, Y=8. Retract plane R=2, bore depth Z=-16, feed rate F=70.',
+          ru: 'Расточите отверстие в точке X=12, Y=8. Плоскость отвода R=2, глубина растачивания Z=-16, подача F=70.',
+        },
+        params: [
+          { letter: 'X', value: '12' },
+          { letter: 'Y', value: '8' },
+          { letter: 'Z', value: '-16' },
+          { letter: 'R', value: '2' },
+          { letter: 'F', value: '70' },
+        ],
       },
-      params: [
-        { letter: 'X', value: '12' },
-        { letter: 'Y', value: '8' },
-        { letter: 'Z', value: '-16' },
-        { letter: 'R', value: '2' },
-        { letter: 'F', value: '70' },
-      ],
-    },
+      {
+        prompt: {
+          en: 'Bore a hole at X=0, Y=0. Retract plane R=3, bore depth Z=-10, feed rate F=90.',
+          ru: 'Расточите отверстие в точке X=0, Y=0. Плоскость отвода R=3, глубина растачивания Z=-10, подача F=90.',
+        },
+        params: [
+          { letter: 'X', value: '0' },
+          { letter: 'Y', value: '0' },
+          { letter: 'Z', value: '-10' },
+          { letter: 'R', value: '3' },
+          { letter: 'F', value: '90' },
+        ],
+      },
+      {
+        prompt: {
+          en: 'Bore a hole at X=-6, Y=20. Retract plane R=4, bore depth Z=-22, feed rate F=55.',
+          ru: 'Расточите отверстие в точке X=-6, Y=20. Плоскость отвода R=4, глубина растачивания Z=-22, подача F=55.',
+        },
+        params: [
+          { letter: 'X', value: '-6' },
+          { letter: 'Y', value: '20' },
+          { letter: 'Z', value: '-22' },
+          { letter: 'R', value: '4' },
+          { letter: 'F', value: '55' },
+        ],
+      },
+    ],
   },
   {
     id: 53,
@@ -1533,19 +1893,47 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G86 is a boring cycle: the tool feeds to the bottom of the hole, the spindle stops, and the tool rapids out, which can leave a witness mark but is faster than G85.',
       ru: 'G86 — цикл растачивания: инструмент подаётся до дна отверстия, шпиндель останавливается, и инструмент быстро отводится; это быстрее G85, но может оставить след на поверхности.',
     },
-    lineExample: {
-      prompt: {
-        en: 'Bore a hole at X=18, Y=6, stopping the spindle at the bottom before a rapid retract. Retract plane R=2, bore depth Z=-14, feed rate F=65.',
-        ru: 'Расточите отверстие в точке X=18, Y=6 с остановкой шпинделя на дне перед быстрым отводом. Плоскость отвода R=2, глубина растачивания Z=-14, подача F=65.',
+    lineExamples: [
+      {
+        prompt: {
+          en: 'Bore a hole at X=18, Y=6, stopping the spindle at the bottom before a rapid retract. Retract plane R=2, bore depth Z=-14, feed rate F=65.',
+          ru: 'Расточите отверстие в точке X=18, Y=6 с остановкой шпинделя на дне перед быстрым отводом. Плоскость отвода R=2, глубина растачивания Z=-14, подача F=65.',
+        },
+        params: [
+          { letter: 'X', value: '18' },
+          { letter: 'Y', value: '6' },
+          { letter: 'Z', value: '-14' },
+          { letter: 'R', value: '2' },
+          { letter: 'F', value: '65' },
+        ],
       },
-      params: [
-        { letter: 'X', value: '18' },
-        { letter: 'Y', value: '6' },
-        { letter: 'Z', value: '-14' },
-        { letter: 'R', value: '2' },
-        { letter: 'F', value: '65' },
-      ],
-    },
+      {
+        prompt: {
+          en: 'Bore a hole at X=0, Y=0, stopping the spindle at the bottom before a rapid retract. Retract plane R=3, bore depth Z=-9, feed rate F=80.',
+          ru: 'Расточите отверстие в точке X=0, Y=0 с остановкой шпинделя на дне перед быстрым отводом. Плоскость отвода R=3, глубина растачивания Z=-9, подача F=80.',
+        },
+        params: [
+          { letter: 'X', value: '0' },
+          { letter: 'Y', value: '0' },
+          { letter: 'Z', value: '-9' },
+          { letter: 'R', value: '3' },
+          { letter: 'F', value: '80' },
+        ],
+      },
+      {
+        prompt: {
+          en: 'Bore a hole at X=25, Y=-10, stopping the spindle at the bottom before a rapid retract. Retract plane R=2, bore depth Z=-20, feed rate F=50.',
+          ru: 'Расточите отверстие в точке X=25, Y=-10 с остановкой шпинделя на дне перед быстрым отводом. Плоскость отвода R=2, глубина растачивания Z=-20, подача F=50.',
+        },
+        params: [
+          { letter: 'X', value: '25' },
+          { letter: 'Y', value: '-10' },
+          { letter: 'Z', value: '-20' },
+          { letter: 'R', value: '2' },
+          { letter: 'F', value: '50' },
+        ],
+      },
+    ],
   },
   {
     id: 54,
@@ -2128,17 +2516,37 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'On milling controls, G92 presets the coordinate system by assigning the specified coordinate values to the tool\u2019s current position, effectively shifting the whole coordinate system without moving the machine.',
       ru: 'В системах ЧПУ фрезерных станков G92 задаёт систему координат, присваивая текущей позиции инструмента указанные значения координат, фактически смещая всю систему координат без перемещения станка.',
     },
-    lineExample: {
-      prompt: {
-        en: 'Preset the coordinate system so the tool\u2019s current position becomes X=0, Y=0, Z=0.',
-        ru: 'Задайте систему координат так, чтобы текущая позиция инструмента стала X=0, Y=0, Z=0.',
+    lineExamples: [
+      {
+        prompt: {
+          en: 'Preset the coordinate system so the tool\u2019s current position becomes X=0, Y=0, Z=0.',
+          ru: 'Задайте систему координат так, чтобы текущая позиция инструмента стала X=0, Y=0, Z=0.',
+        },
+        params: [
+          { letter: 'X', value: '0' },
+          { letter: 'Y', value: '0' },
+          { letter: 'Z', value: '0' },
+        ],
       },
-      params: [
-        { letter: 'X', value: '0' },
-        { letter: 'Y', value: '0' },
-        { letter: 'Z', value: '0' },
-      ],
-    },
+      {
+        prompt: {
+          en: 'Preset the coordinate system so the tool\u2019s current position becomes X=10, Y=0, Z=0.',
+          ru: 'Задайте систему координат так, чтобы текущая позиция инструмента стала X=10, Y=0, Z=0.',
+        },
+        params: [
+          { letter: 'X', value: '10' },
+          { letter: 'Y', value: '0' },
+          { letter: 'Z', value: '0' },
+        ],
+      },
+      {
+        prompt: {
+          en: 'Preset the coordinate system so the tool\u2019s current position becomes Z=50.',
+          ru: 'Задайте систему координат так, чтобы текущая позиция инструмента стала Z=50.',
+        },
+        params: [{ letter: 'Z', value: '50' }],
+      },
+    ],
   },
   {
     id: 73,
@@ -2331,20 +2739,50 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G87 is a back boring cycle: the spindle orients and shifts the tool away from center, positions it below the hole, then feeds upward to cut a counterbore on the underside of the workpiece.',
       ru: 'G87 — цикл обратного растачивания: шпиндель ориентируется, инструмент смещается от центра, позиционируется под отверстием, а затем подаётся вверх для обработки раззенковки с обратной стороны заготовки.',
     },
-    lineExample: {
-      prompt: {
-        en: 'Back-bore a counterbore at X=0, Y=0. Retract plane R=-5, counterbore depth Z=-3, tool shift Q=3, feed rate F=40.',
-        ru: 'Выполните обратное растачивание в точке X=0, Y=0. Плоскость отвода R=-5, глубина раззенковки Z=-3, смещение инструмента Q=3, подача F=40.',
+    lineExamples: [
+      {
+        prompt: {
+          en: 'Back-bore a counterbore at X=0, Y=0. Retract plane R=-5, counterbore depth Z=-3, tool shift Q=3, feed rate F=40.',
+          ru: 'Выполните обратное растачивание в точке X=0, Y=0. Плоскость отвода R=-5, глубина раззенковки Z=-3, смещение инструмента Q=3, подача F=40.',
+        },
+        params: [
+          { letter: 'X', value: '0' },
+          { letter: 'Y', value: '0' },
+          { letter: 'Z', value: '-3' },
+          { letter: 'R', value: '-5' },
+          { letter: 'Q', value: '3' },
+          { letter: 'F', value: '40' },
+        ],
       },
-      params: [
-        { letter: 'X', value: '0' },
-        { letter: 'Y', value: '0' },
-        { letter: 'Z', value: '-3' },
-        { letter: 'R', value: '-5' },
-        { letter: 'Q', value: '3' },
-        { letter: 'F', value: '40' },
-      ],
-    },
+      {
+        prompt: {
+          en: 'Back-bore a counterbore at X=15, Y=0. Retract plane R=-8, counterbore depth Z=-4, tool shift Q=2, feed rate F=35.',
+          ru: 'Выполните обратное растачивание в точке X=15, Y=0. Плоскость отвода R=-8, глубина раззенковки Z=-4, смещение инструмента Q=2, подача F=35.',
+        },
+        params: [
+          { letter: 'X', value: '15' },
+          { letter: 'Y', value: '0' },
+          { letter: 'Z', value: '-4' },
+          { letter: 'R', value: '-8' },
+          { letter: 'Q', value: '2' },
+          { letter: 'F', value: '35' },
+        ],
+      },
+      {
+        prompt: {
+          en: 'Back-bore a counterbore at X=-5, Y=10. Retract plane R=-4, counterbore depth Z=-2, tool shift Q=4, feed rate F=45.',
+          ru: 'Выполните обратное растачивание в точке X=-5, Y=10. Плоскость отвода R=-4, глубина раззенковки Z=-2, смещение инструмента Q=4, подача F=45.',
+        },
+        params: [
+          { letter: 'X', value: '-5' },
+          { letter: 'Y', value: '10' },
+          { letter: 'Z', value: '-2' },
+          { letter: 'R', value: '-4' },
+          { letter: 'Q', value: '4' },
+          { letter: 'F', value: '45' },
+        ],
+      },
+    ],
   },
   {
     id: 79,
@@ -2372,20 +2810,50 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G88 is a boring cycle: the tool feeds to the bottom of the hole, dwells, the spindle stops, and the operator retracts the tool manually before the cycle continues.',
       ru: 'G88 — цикл растачивания: инструмент подаётся до дна отверстия, выдерживается пауза, шпиндель останавливается, и оператор вручную отводит инструмент перед продолжением цикла.',
     },
-    lineExample: {
-      prompt: {
-        en: 'Bore a hole at X=8, Y=8 with a dwell and manual retract at the bottom. Retract plane R=2, bore depth Z=-15, dwell time P=1000, feed rate F=55.',
-        ru: 'Расточите отверстие в точке X=8, Y=8 с выдержкой и ручным отводом на дне. Плоскость отвода R=2, глубина растачивания Z=-15, время выдержки P=1000, подача F=55.',
+    lineExamples: [
+      {
+        prompt: {
+          en: 'Bore a hole at X=8, Y=8 with a dwell and manual retract at the bottom. Retract plane R=2, bore depth Z=-15, dwell time P=1000, feed rate F=55.',
+          ru: 'Расточите отверстие в точке X=8, Y=8 с выдержкой и ручным отводом на дне. Плоскость отвода R=2, глубина растачивания Z=-15, время выдержки P=1000, подача F=55.',
+        },
+        params: [
+          { letter: 'X', value: '8' },
+          { letter: 'Y', value: '8' },
+          { letter: 'Z', value: '-15' },
+          { letter: 'R', value: '2' },
+          { letter: 'P', value: '1000' },
+          { letter: 'F', value: '55' },
+        ],
       },
-      params: [
-        { letter: 'X', value: '8' },
-        { letter: 'Y', value: '8' },
-        { letter: 'Z', value: '-15' },
-        { letter: 'R', value: '2' },
-        { letter: 'P', value: '1000' },
-        { letter: 'F', value: '55' },
-      ],
-    },
+      {
+        prompt: {
+          en: 'Bore a hole at X=0, Y=0 with a dwell and manual retract at the bottom. Retract plane R=3, bore depth Z=-10, dwell time P=600, feed rate F=65.',
+          ru: 'Расточите отверстие в точке X=0, Y=0 с выдержкой и ручным отводом на дне. Плоскость отвода R=3, глубина растачивания Z=-10, время выдержки P=600, подача F=65.',
+        },
+        params: [
+          { letter: 'X', value: '0' },
+          { letter: 'Y', value: '0' },
+          { letter: 'Z', value: '-10' },
+          { letter: 'R', value: '3' },
+          { letter: 'P', value: '600' },
+          { letter: 'F', value: '65' },
+        ],
+      },
+      {
+        prompt: {
+          en: 'Bore a hole at X=-10, Y=15 with a dwell and manual retract at the bottom. Retract plane R=4, bore depth Z=-20, dwell time P=1200, feed rate F=45.',
+          ru: 'Расточите отверстие в точке X=-10, Y=15 с выдержкой и ручным отводом на дне. Плоскость отвода R=4, глубина растачивания Z=-20, время выдержки P=1200, подача F=45.',
+        },
+        params: [
+          { letter: 'X', value: '-10' },
+          { letter: 'Y', value: '15' },
+          { letter: 'Z', value: '-20' },
+          { letter: 'R', value: '4' },
+          { letter: 'P', value: '1200' },
+          { letter: 'F', value: '45' },
+        ],
+      },
+    ],
   },
   {
     id: 80,
@@ -2416,20 +2884,50 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G89 is a boring cycle like G85 (feed in, feed out) but adds a dwell at the bottom of the hole for a cleaner finish.',
       ru: 'G89 — цикл растачивания, как G85 (подача на входе и выходе), но с добавлением выдержки на дне отверстия для более чистой поверхности.',
     },
-    lineExample: {
-      prompt: {
-        en: 'Bore a hole at X=14, Y=4 with a dwell at the bottom. Retract plane R=2, bore depth Z=-18, dwell time P=750, feed rate F=60.',
-        ru: 'Расточите отверстие в точке X=14, Y=4 с выдержкой на дне. Плоскость отвода R=2, глубина растачивания Z=-18, время выдержки P=750, подача F=60.',
+    lineExamples: [
+      {
+        prompt: {
+          en: 'Bore a hole at X=14, Y=4 with a dwell at the bottom. Retract plane R=2, bore depth Z=-18, dwell time P=750, feed rate F=60.',
+          ru: 'Расточите отверстие в точке X=14, Y=4 с выдержкой на дне. Плоскость отвода R=2, глубина растачивания Z=-18, время выдержки P=750, подача F=60.',
+        },
+        params: [
+          { letter: 'X', value: '14' },
+          { letter: 'Y', value: '4' },
+          { letter: 'Z', value: '-18' },
+          { letter: 'R', value: '2' },
+          { letter: 'P', value: '750' },
+          { letter: 'F', value: '60' },
+        ],
       },
-      params: [
-        { letter: 'X', value: '14' },
-        { letter: 'Y', value: '4' },
-        { letter: 'Z', value: '-18' },
-        { letter: 'R', value: '2' },
-        { letter: 'P', value: '750' },
-        { letter: 'F', value: '60' },
-      ],
-    },
+      {
+        prompt: {
+          en: 'Bore a hole at X=0, Y=0 with a dwell at the bottom. Retract plane R=3, bore depth Z=-12, dwell time P=500, feed rate F=75.',
+          ru: 'Расточите отверстие в точке X=0, Y=0 с выдержкой на дне. Плоскость отвода R=3, глубина растачивания Z=-12, время выдержки P=500, подача F=75.',
+        },
+        params: [
+          { letter: 'X', value: '0' },
+          { letter: 'Y', value: '0' },
+          { letter: 'Z', value: '-12' },
+          { letter: 'R', value: '3' },
+          { letter: 'P', value: '500' },
+          { letter: 'F', value: '75' },
+        ],
+      },
+      {
+        prompt: {
+          en: 'Bore a hole at X=-8, Y=22 with a dwell at the bottom. Retract plane R=4, bore depth Z=-24, dwell time P=900, feed rate F=45.',
+          ru: 'Расточите отверстие в точке X=-8, Y=22 с выдержкой на дне. Плоскость отвода R=4, глубина растачивания Z=-24, время выдержки P=900, подача F=45.',
+        },
+        params: [
+          { letter: 'X', value: '-8' },
+          { letter: 'Y', value: '22' },
+          { letter: 'Z', value: '-24' },
+          { letter: 'R', value: '4' },
+          { letter: 'P', value: '900' },
+          { letter: 'F', value: '45' },
+        ],
+      },
+    ],
   },
   {
     id: 81,

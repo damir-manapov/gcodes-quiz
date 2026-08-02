@@ -539,13 +539,15 @@ describe('buildSessionQuestion (line mode)', () => {
     options: [{ en: 'Simple drilling cycle', ru: 'а' }],
     correctAnswer: 0,
     explanation: { en: 'exp', ru: 'оу' },
-    lineExample: {
-      prompt: { en: 'Drill a hole at X=10, Y=5.', ru: 'В2' },
-      params: [
-        { letter: 'X', value: '10' },
-        { letter: 'Y', value: '5' },
-      ],
-    },
+    lineExamples: [
+      {
+        prompt: { en: 'Drill a hole at X=10, Y=5.', ru: 'В2' },
+        params: [
+          { letter: 'X', value: '10' },
+          { letter: 'Y', value: '5' },
+        ],
+      },
+    ],
   };
   const pool = [questionWithLineExample];
   const noHistory = new Map<string, number>();
@@ -576,6 +578,49 @@ describe('buildSessionQuestion (line mode)', () => {
     expect(buildSessionQuestion(conceptual, pool, 'line', noHistory)).toBe(
       conceptual,
     );
+  });
+
+  it('picks a random worked example when a code has more than one', () => {
+    const questionWithManyExamples: QuizQuestion = {
+      ...questionWithLineExample,
+      lineExamples: [
+        {
+          prompt: { en: 'Drill a hole at X=10, Y=5.', ru: 'В2' },
+          params: [{ letter: 'X', value: '10' }],
+        },
+        {
+          prompt: { en: 'Drill a hole at X=20, Y=15.', ru: 'В3' },
+          params: [{ letter: 'X', value: '20' }],
+        },
+      ],
+    };
+    const first = buildSessionQuestion(
+      questionWithManyExamples,
+      pool,
+      'line',
+      noHistory,
+      1,
+      () => 0,
+    );
+    expect(first.prompt).toEqual({
+      en: 'Drill a hole at X=10, Y=5.',
+      ru: 'В2',
+    });
+    expect(first.options).toEqual([{ en: 'G81 X10', ru: 'G81 X10' }]);
+
+    const second = buildSessionQuestion(
+      questionWithManyExamples,
+      pool,
+      'line',
+      noHistory,
+      1,
+      () => 0.99,
+    );
+    expect(second.prompt).toEqual({
+      en: 'Drill a hole at X=20, Y=15.',
+      ru: 'В3',
+    });
+    expect(second.options).toEqual([{ en: 'G81 X20', ru: 'G81 X20' }]);
   });
 });
 
