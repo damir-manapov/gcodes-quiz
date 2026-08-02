@@ -244,6 +244,41 @@ describe('orderQuestions', () => {
     expect(identity.map((q) => q.id)).toEqual([1, 2, 3]);
   });
 
+  it('only counts the 10 most recent answers per question', () => {
+    // Question 1 was missed 11 times long ago but has since been answered
+    // correctly 10 times in a row; only the recent streak should count,
+    // so it should no longer look "weak".
+    const oldMisses: AnswerHistoryRecord[] = Array.from(
+      { length: 11 },
+      (_, i) => ({
+        questionId: 1,
+        isCorrect: false,
+        answeredAt: `2024-01-01T00:00:0${i % 10}Z`,
+        mode: 'forward' as const,
+      }),
+    );
+    const recentCorrect: AnswerHistoryRecord[] = Array.from(
+      { length: 10 },
+      (_, i) => ({
+        questionId: 1,
+        isCorrect: true,
+        answeredAt: `2024-02-01T00:00:0${i}Z`,
+        mode: 'forward' as const,
+      }),
+    );
+    const answers = [...oldMisses, ...recentCorrect];
+    const ordered = orderQuestions(
+      orderingQuestions,
+      answers,
+      'weakest',
+      'forward',
+      () => 0.999,
+    );
+    // Question 1's recent accuracy is perfect (better than the unattempted
+    // questions 2 and 3, which sort last), so it now sorts first.
+    expect(ordered.map((q) => q.id)).toEqual([1, 2, 3]);
+  });
+
   it('orders never-answered and long-untouched questions first', () => {
     const answers: AnswerHistoryRecord[] = [
       {

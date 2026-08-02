@@ -343,6 +343,11 @@ type QuestionOrderStat = {
 // are treated as the longest overdue.
 const NEVER_ANSWERED = '';
 
+// Only this many of a question's most recent answers (per mode) count
+// towards ordering stats, so old mistakes on a code you've since learned
+// don't keep the question surfacing as "weak" or "least-answered" forever.
+const MAX_RECENT_ANSWERS_PER_QUESTION = 10;
+
 // Ordering stats are computed per quiz mode: a question you've mastered in
 // Code -> Meaning shouldn't be treated as "weak" or "recently answered" in
 // Action -> Code, since the two modes ask fundamentally different things.
@@ -359,21 +364,34 @@ export function orderQuestions(
 
   const relevantAnswers = answers.filter((answer) => answer.mode === quizMode);
 
-  const statsByQuestion = new Map<number, QuestionOrderStat>();
+  const answersByQuestion = new Map<number, AnswerHistoryRecord[]>();
   for (const answer of relevantAnswers) {
-    const entry = statsByQuestion.get(answer.questionId) ?? {
+    const list = answersByQuestion.get(answer.questionId) ?? [];
+    list.push(answer);
+    answersByQuestion.set(answer.questionId, list);
+  }
+
+  const statsByQuestion = new Map<number, QuestionOrderStat>();
+  for (const [questionId, questionAnswers] of answersByQuestion) {
+    const recentAnswers = [...questionAnswers]
+      .sort((a, b) => a.answeredAt.localeCompare(b.answeredAt))
+      .slice(-MAX_RECENT_ANSWERS_PER_QUESTION);
+
+    const entry: QuestionOrderStat = {
       attempts: 0,
       correct: 0,
       lastAnsweredAt: NEVER_ANSWERED,
     };
-    entry.attempts += 1;
-    if (answer.isCorrect) {
-      entry.correct += 1;
+    for (const answer of recentAnswers) {
+      entry.attempts += 1;
+      if (answer.isCorrect) {
+        entry.correct += 1;
+      }
+      if (answer.answeredAt > entry.lastAnsweredAt) {
+        entry.lastAnsweredAt = answer.answeredAt;
+      }
     }
-    if (answer.answeredAt > entry.lastAnsweredAt) {
-      entry.lastAnsweredAt = answer.answeredAt;
-    }
-    statsByQuestion.set(answer.questionId, entry);
+    statsByQuestion.set(questionId, entry);
   }
 
   // Shuffled before sorting so that questions tied on the sort key (e.g.
