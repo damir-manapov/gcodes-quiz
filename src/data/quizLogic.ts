@@ -376,14 +376,21 @@ export function orderQuestions(
     statsByQuestion.set(answer.questionId, entry);
   }
 
-  const withStats = questions.map((question) => ({
-    question,
-    stat: statsByQuestion.get(question.id) ?? {
-      attempts: 0,
-      correct: 0,
-      lastAnsweredAt: NEVER_ANSWERED,
-    },
-  }));
+  // Shuffled before sorting so that questions tied on the sort key (e.g.
+  // multiple never-answered questions) don't fall back to creation order,
+  // which would otherwise group similar/adjacent questions together. Array
+  // sort is stable, so ties keep this shuffled order.
+  const withStats = shuffle(
+    questions.map((question) => ({
+      question,
+      stat: statsByQuestion.get(question.id) ?? {
+        attempts: 0,
+        correct: 0,
+        lastAnsweredAt: NEVER_ANSWERED,
+      },
+    })),
+    random,
+  );
 
   switch (order) {
     case 'weakest':

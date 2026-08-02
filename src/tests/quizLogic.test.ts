@@ -221,6 +221,29 @@ describe('orderQuestions', () => {
     expect(ordered.map((q) => q.id)).toEqual([3, 2, 1]);
   });
 
+  it('shuffles questions tied on the sort key instead of using creation order', () => {
+    // None of the questions have been answered, so all three tie on
+    // attempts (0). A different "random" source should produce a different
+    // tie order instead of always falling back to creation order (1, 2, 3).
+    const shuffled = orderQuestions(
+      orderingQuestions,
+      [],
+      'least-answered',
+      'forward',
+      () => 0,
+    );
+    const identity = orderQuestions(
+      orderingQuestions,
+      [],
+      'least-answered',
+      'forward',
+      // A random source close to 1 leaves the Fisher-Yates shuffle a no-op.
+      () => 0.999,
+    );
+    expect(shuffled.map((q) => q.id)).toEqual([2, 3, 1]);
+    expect(identity.map((q) => q.id)).toEqual([1, 2, 3]);
+  });
+
   it('orders never-answered and long-untouched questions first', () => {
     const answers: AnswerHistoryRecord[] = [
       {
@@ -264,11 +287,15 @@ describe('orderQuestions', () => {
         mode: 'reverse',
       },
     ];
+    // A random source close to 1 leaves the tie-breaking shuffle a no-op,
+    // so questions tied on the sort key keep their creation order below.
+    const identityRandom = () => 0.999;
     const forwardOrdered = orderQuestions(
       orderingQuestions,
       answers,
       'weakest',
       'forward',
+      identityRandom,
     );
     // Question 1 has a perfect forward-mode record, question 2 has no
     // forward-mode answers at all (unattempted questions sort last).
@@ -279,6 +306,7 @@ describe('orderQuestions', () => {
       answers,
       'weakest',
       'reverse',
+      identityRandom,
     );
     // Question 2's reverse-mode miss should surface first; question 1 has
     // no reverse-mode answers.
