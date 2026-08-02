@@ -233,6 +233,15 @@ function buildReverseDistractorPool(
   return pool;
 }
 
+// Reverse mode shows a 3x3 grid of codes to choose from, since codes are
+// short and a bigger pool makes for a more meaningful memory test; the other
+// modes keep a plain list of 4 options.
+const DEFAULT_OPTION_COUNTS: Record<QuizMode, number> = {
+  forward: 4,
+  reverse: 9,
+  typed: 1,
+};
+
 // Builds the question as it should be displayed in a quiz session: for
 // forward mode, shuffles in extra distractors pooled from the rest of the
 // question bank; for reverse mode, turns the prompt into the description of
@@ -251,7 +260,7 @@ export function buildSessionQuestion(
   allQuestions: QuizQuestion[],
   mode: QuizMode,
   hashCounts: Map<string, number>,
-  optionCount = 4,
+  optionCount = DEFAULT_OPTION_COUNTS[mode],
   random: () => number = Math.random,
 ): QuizQuestion {
   const weightOf = (candidate: DistractorCandidate) =>

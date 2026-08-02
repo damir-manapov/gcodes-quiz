@@ -112,37 +112,40 @@ export function QuizCard({
             )}
           </>
         ) : (
-          question.options.map((option, index) => {
-            const isCorrect = index === question.correctAnswer;
-            const isSelected = index === selectedAnswer;
+          <View style={quizMode === 'reverse' ? styles.optionsGrid : null}>
+            {question.options.map((option, index) => {
+              const isCorrect = index === question.correctAnswer;
+              const isSelected = index === selectedAnswer;
 
-            const optionStyle = [
-              styles.optionButton,
-              showAnswer && isCorrect ? styles.correctOption : null,
-              showAnswer && isSelected && !isCorrect
-                ? styles.wrongOption
-                : null,
-              !showAnswer && isSelected ? styles.selectedOption : null,
-            ];
+              const optionStyle = [
+                styles.optionButton,
+                quizMode === 'reverse' ? styles.gridOptionButton : null,
+                showAnswer && isCorrect ? styles.correctOption : null,
+                showAnswer && isSelected && !isCorrect
+                  ? styles.wrongOption
+                  : null,
+                !showAnswer && isSelected ? styles.selectedOption : null,
+              ];
 
-            return (
-              <TouchableOpacity
-                key={option.en}
-                style={optionStyle}
-                onPress={() => submitAnswer(index)}
-                disabled={showAnswer}
-                accessibilityRole="button"
-                accessibilityState={{
-                  selected: isSelected,
-                  disabled: showAnswer,
-                }}
-              >
-                <Text style={styles.optionText}>
-                  {localize(option, language)}
-                </Text>
-              </TouchableOpacity>
-            );
-          })
+              return (
+                <TouchableOpacity
+                  key={option.en}
+                  style={optionStyle}
+                  onPress={() => submitAnswer(index)}
+                  disabled={showAnswer}
+                  accessibilityRole="button"
+                  accessibilityState={{
+                    selected: isSelected,
+                    disabled: showAnswer,
+                  }}
+                >
+                  <Text style={styles.optionText}>
+                    {localize(option, language)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         )}
       </View>
 

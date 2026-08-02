@@ -126,6 +126,16 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 14,
     backgroundColor: '#f8fafc',
   },
+  optionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  gridOptionButton: {
+    flexBasis: '30%',
+    flexGrow: 1,
+    alignItems: 'center',
+  },
   selectedOption: {
     borderColor: '#2563eb',
     backgroundColor: '#dbeafe',

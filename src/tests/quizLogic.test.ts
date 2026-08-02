@@ -388,6 +388,27 @@ describe('toReverseQuestion (via buildSessionQuestion in reverse mode)', () => {
     expect(codes).toContain('M03');
   });
 
+  it('defaults to a 3x3 grid of 9 options when there are enough distractor codes', () => {
+    const bigPool: QuizQuestion[] = Array.from({ length: 12 }, (_, index) => ({
+      id: 40 + index,
+      category: 'G',
+      topic: 'motion',
+      code: `G${index}`,
+      prompt: { en: `What does G${index} do?`, ru: `Q${index}` },
+      options: [{ en: `does G${index} thing`, ru: `д${index}` }],
+      correctAnswer: 0,
+      explanation: { en: 'exp', ru: 'оу' },
+    }));
+    const target = bigPool[0] as QuizQuestion;
+    const reversed = buildSessionQuestion(
+      target,
+      bigPool,
+      'reverse',
+      noHistory,
+    );
+    expect(reversed.options).toHaveLength(9);
+  });
+
   it('returns the question unchanged when no single code can be found', () => {
     const conceptual: QuizQuestion = {
       id: 23,
