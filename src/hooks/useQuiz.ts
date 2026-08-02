@@ -15,6 +15,7 @@ import {
   getQuestionCode,
   hashAnswerText,
   isCorrectAnswer,
+  isCorrectLineAnswer,
   isCorrectTypedAnswer,
   normalizeCode,
   orderQuestions,
@@ -26,9 +27,16 @@ import { logError } from '../logger';
 
 // Reverse and typed modes both need a single identifiable code per
 // question, so those modes drop the handful of purely conceptual questions
-// that don't have one.
-function needsSingleCode(mode: QuizMode): boolean {
-  return mode === 'reverse' || mode === 'typed';
+// that don't have one; line mode further needs a worked parameter example,
+// so it only includes the curated subset of questions that have one.
+function isEligibleForMode(question: QuizQuestion, mode: QuizMode): boolean {
+  if (mode === 'line') {
+    return question.lineExample !== undefined;
+  }
+  if (mode === 'reverse' || mode === 'typed') {
+    return getQuestionCode(question) !== null;
+  }
+  return true;
 }
 
 // Not a real option index (typed-mode answers aren't picked from a list),
@@ -63,12 +71,9 @@ export function useQuiz(questionOrder: QuestionOrder, quizMode: QuizMode) {
             questionOrder,
             quizMode,
           );
-          // Reverse/typed modes need a single identifiable code per question,
-          // so drop the handful of purely conceptual questions that don't
-          // have one.
-          const eligible = needsSingleCode(quizMode)
-            ? ordered.filter((question) => getQuestionCode(question) !== null)
-            : ordered;
+          const eligible = ordered.filter((question) =>
+            isEligibleForMode(question, quizMode),
+          );
           // Weight each question's distractors by how often the user has
           // picked that specific wrong answer before, so frequent mistakes
           // are more likely to be offered again.
@@ -141,11 +146,19 @@ export function useQuiz(questionOrder: QuestionOrder, quizMode: QuizMode) {
       return;
     }
     setShowAnswer(true);
-    const isCorrect = isCorrectTypedAnswer(currentQuestion, typedAnswer);
+    // Shared by typed mode (a bare code) and line mode (a full code line).
+    const isLineMode = quizMode === 'line';
+    const isCorrect = isLineMode
+      ? isCorrectLineAnswer(currentQuestion, typedAnswer)
+      : isCorrectTypedAnswer(currentQuestion, typedAnswer);
     if (isCorrect) {
       setScore((value) => value + 1);
     }
-    const answerHash = hashAnswerText(normalizeCode(typedAnswer));
+    const answerHash = hashAnswerText(
+      isLineMode
+        ? typedAnswer.trim().toUpperCase()
+        : normalizeCode(typedAnswer),
+    );
     recordAnswer(
       currentQuestion.id,
       TYPED_ANSWER_INDEX,

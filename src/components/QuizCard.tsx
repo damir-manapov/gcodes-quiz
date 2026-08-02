@@ -1,6 +1,10 @@
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import type { QuizQuestion } from '../data/questions';
-import { isCorrectTypedAnswer, type QuizMode } from '../data/quizLogic';
+import {
+  isCorrectLineAnswer,
+  isCorrectTypedAnswer,
+  type QuizMode,
+} from '../data/quizLogic';
 import {
   type Language,
   type LocalizedText,
@@ -45,8 +49,14 @@ export function QuizCard({
   nextQuestion,
 }: Props) {
   const isTyped = quizMode === 'typed';
-  const isTypedCorrect =
-    isTyped && showAnswer && isCorrectTypedAnswer(question, typedAnswer);
+  const isLine = quizMode === 'line';
+  const isFreeText = isTyped || isLine;
+  const isFreeTextCorrect =
+    isFreeText &&
+    showAnswer &&
+    (isLine
+      ? isCorrectLineAnswer(question, typedAnswer)
+      : isCorrectTypedAnswer(question, typedAnswer));
 
   return (
     <>
@@ -67,31 +77,38 @@ export function QuizCard({
         {isTyped ? (
           <Text style={styles.sectionLabel}>{t.typedQuestionHint}</Text>
         ) : null}
+        {isLine ? (
+          <Text style={styles.sectionLabel}>{t.lineQuestionHint}</Text>
+        ) : null}
         <Text style={styles.prompt}>{localize(question.prompt, language)}</Text>
-        {isTyped ? (
+        {isFreeText ? (
           <>
             <TextInput
               style={styles.textInput}
               value={typedAnswer}
               onChangeText={setTypedAnswer}
-              placeholder={t.typedAnswerPlaceholder}
+              placeholder={
+                isLine ? t.lineAnswerPlaceholder : t.typedAnswerPlaceholder
+              }
               autoCapitalize="characters"
               autoCorrect={false}
               editable={!showAnswer}
               onSubmitEditing={submitTypedAnswer}
-              accessibilityLabel={t.typedQuestionHint}
+              accessibilityLabel={
+                isLine ? t.lineQuestionHint : t.typedQuestionHint
+              }
             />
             {showAnswer ? (
               <Text
                 style={
-                  isTypedCorrect
+                  isFreeTextCorrect
                     ? styles.typedResultCorrect
                     : styles.typedResultIncorrect
                 }
               >
-                {isTypedCorrect
+                {isFreeTextCorrect
                   ? t.typedResultCorrect
-                  : t.typedResultIncorrect(
+                  : (isLine ? t.lineResultIncorrect : t.typedResultIncorrect)(
                       localize(
                         question.options[
                           question.correctAnswer

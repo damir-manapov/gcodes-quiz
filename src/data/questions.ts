@@ -2,6 +2,20 @@ import type { LocalizedText } from '../i18n';
 
 export type QuizCategory = 'G' | 'M';
 
+// One address word's expected value in a line-mode worked example, e.g.
+// { letter: 'X', value: '10' } for the X10 word in "G81 X10 Y5 Z-12 R2 F100".
+export type CodeLineParam = {
+  letter: string;
+  value: string;
+};
+
+export type LineExample = {
+  // Describes a concrete scenario (with the param values spelled out in
+  // words) that the user must translate into a full code line.
+  prompt: LocalizedText;
+  params: CodeLineParam[];
+};
+
 export type QuizQuestion = {
   id: number;
   category: QuizCategory;
@@ -14,6 +28,9 @@ export type QuizQuestion = {
   // "action -> code" reverse quiz mode. Omitted for questions that aren't
   // about one specific code (conceptual questions).
   code?: string;
+  // Worked example used to build the "write the line" quiz mode. Only
+  // present for the curated subset of codes that take parameters.
+  lineExample?: LineExample;
 };
 
 export const quizQuestions: QuizQuestion[] = [
@@ -40,6 +57,17 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G00 performs a rapid positioning move without cutting feed.',
       ru: 'G00 выполняет быстрое позиционирование без рабочей подачи.',
     },
+    lineExample: {
+      prompt: {
+        en: 'Rapidly move the tool to X=50, Y=25, Z=10.',
+        ru: 'Быстро переместите инструмент в точку X=50, Y=25, Z=10.',
+      },
+      params: [
+        { letter: 'X', value: '50' },
+        { letter: 'Y', value: '25' },
+        { letter: 'Z', value: '10' },
+      ],
+    },
   },
   {
     id: 2,
@@ -63,6 +91,17 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: {
       en: 'G01 moves the tool in a straight line at the programmed feed rate.',
       ru: 'G01 перемещает инструмент по прямой линии с заданной рабочей подачей.',
+    },
+    lineExample: {
+      prompt: {
+        en: 'Move the tool in a straight line to X=30, Y=-10 at a feed rate of F=200.',
+        ru: 'Переместите инструмент по прямой в точку X=30, Y=-10 с подачей F=200.',
+      },
+      params: [
+        { letter: 'X', value: '30' },
+        { letter: 'Y', value: '-10' },
+        { letter: 'F', value: '200' },
+      ],
     },
   },
   {
@@ -239,6 +278,19 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G02 produces a clockwise circular (arc) move, typically defined with I/J/K or R parameters.',
       ru: 'G02 выполняет круговое (дуговое) перемещение по часовой стрелке, обычно задаётся параметрами I/J/K или R.',
     },
+    lineExample: {
+      prompt: {
+        en: 'Cut a clockwise arc ending at X=40, Y=0, with the arc center offset from the start at I=-20, J=0, feed rate F=150.',
+        ru: 'Выполните дугу по часовой стрелке до точки X=40, Y=0, со смещением центра дуги от начала I=-20, J=0, подача F=150.',
+      },
+      params: [
+        { letter: 'X', value: '40' },
+        { letter: 'Y', value: '0' },
+        { letter: 'I', value: '-20' },
+        { letter: 'J', value: '0' },
+        { letter: 'F', value: '150' },
+      ],
+    },
   },
   {
     id: 10,
@@ -265,6 +317,19 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: {
       en: 'G03 produces a counterclockwise circular (arc) move.',
       ru: 'G03 выполняет круговое (дуговое) перемещение против часовой стрелки.',
+    },
+    lineExample: {
+      prompt: {
+        en: 'Cut a counterclockwise arc ending at X=0, Y=40, with the arc center offset from the start at I=0, J=-20, feed rate F=150.',
+        ru: 'Выполните дугу против часовой стрелки до точки X=0, Y=40, со смещением центра дуги от начала I=0, J=-20, подача F=150.',
+      },
+      params: [
+        { letter: 'X', value: '0' },
+        { letter: 'Y', value: '40' },
+        { letter: 'I', value: '0' },
+        { letter: 'J', value: '-20' },
+        { letter: 'F', value: '150' },
+      ],
     },
   },
   {
@@ -614,6 +679,19 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G81 is a basic drilling canned cycle: rapid to position, feed to depth, rapid retract.',
       ru: 'G81 — базовый цикл сверления: быстрый подвод, подача на глубину, быстрый отвод.',
     },
+    lineExample: {
+      prompt: {
+        en: 'Drill a hole at X=10, Y=5. Retract plane R=2, hole depth Z=-12, feed rate F=100.',
+        ru: 'Просверлите отверстие в точке X=10, Y=5. Плоскость отвода R=2, глубина отверстия Z=-12, подача F=100.',
+      },
+      params: [
+        { letter: 'X', value: '10' },
+        { letter: 'Y', value: '5' },
+        { letter: 'Z', value: '-12' },
+        { letter: 'R', value: '2' },
+        { letter: 'F', value: '100' },
+      ],
+    },
   },
   {
     id: 25,
@@ -644,6 +722,20 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G82 is a drilling cycle like G81 but adds a dwell at the bottom of the hole for a better finish.',
       ru: 'G82 — цикл сверления, как G81, но с выдержкой на дне отверстия для лучшего качества поверхности.',
     },
+    lineExample: {
+      prompt: {
+        en: 'Drill a hole with a dwell at the bottom at X=20, Y=15. Retract plane R=2, hole depth Z=-10, dwell time P=500, feed rate F=80.',
+        ru: 'Просверлите отверстие с выдержкой на дне в точке X=20, Y=15. Плоскость отвода R=2, глубина отверстия Z=-10, время выдержки P=500, подача F=80.',
+      },
+      params: [
+        { letter: 'X', value: '20' },
+        { letter: 'Y', value: '15' },
+        { letter: 'Z', value: '-10' },
+        { letter: 'R', value: '2' },
+        { letter: 'P', value: '500' },
+        { letter: 'F', value: '80' },
+      ],
+    },
   },
   {
     id: 26,
@@ -671,6 +763,20 @@ export const quizQuestions: QuizQuestion[] = [
       en: 'G83 performs a peck drilling cycle, fully retracting between pecks to clear chips on deep holes.',
       ru: 'G83 выполняет цикл прерывистого сверления с полным отводом между проходами для удаления стружки из глубоких отверстий.',
     },
+    lineExample: {
+      prompt: {
+        en: 'Peck-drill a hole at X=5, Y=5. Retract plane R=3, hole depth Z=-25, peck depth Q=5, feed rate F=60.',
+        ru: 'Просверлите отверстие с прерывистой подачей в точке X=5, Y=5. Плоскость отвода R=3, глубина отверстия Z=-25, глубина шага Q=5, подача F=60.',
+      },
+      params: [
+        { letter: 'X', value: '5' },
+        { letter: 'Y', value: '5' },
+        { letter: 'Z', value: '-25' },
+        { letter: 'R', value: '3' },
+        { letter: 'Q', value: '5' },
+        { letter: 'F', value: '60' },
+      ],
+    },
   },
   {
     id: 27,
@@ -691,6 +797,19 @@ export const quizQuestions: QuizQuestion[] = [
     explanation: {
       en: 'G84 is a canned cycle for tapping, synchronizing spindle rotation with feed to cut threads.',
       ru: 'G84 — постоянный цикл нарезания резьбы, синхронизирующий вращение шпинделя с подачей.',
+    },
+    lineExample: {
+      prompt: {
+        en: 'Tap a hole at X=0, Y=0. Retract plane R=5, thread depth Z=-15, feed rate F=150 (matched to the thread pitch).',
+        ru: 'Нарежьте резьбу в точке X=0, Y=0. Плоскость отвода R=5, глубина резьбы Z=-15, подача F=150 (согласованная с шагом резьбы).',
+      },
+      params: [
+        { letter: 'X', value: '0' },
+        { letter: 'Y', value: '0' },
+        { letter: 'Z', value: '-15' },
+        { letter: 'R', value: '5' },
+        { letter: 'F', value: '150' },
+      ],
     },
   },
   {

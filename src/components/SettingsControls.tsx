@@ -52,6 +52,7 @@ export function SettingsControls({
     forward: t.modeForward,
     reverse: t.modeReverse,
     typed: t.modeTyped,
+    line: t.modeLine,
   };
 
   return (

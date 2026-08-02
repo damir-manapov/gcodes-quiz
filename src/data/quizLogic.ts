@@ -15,9 +15,9 @@ export type AnswerHistoryRecord = {
   mode: QuizMode | null;
 };
 
-export type QuizMode = 'forward' | 'reverse' | 'typed';
+export type QuizMode = 'forward' | 'reverse' | 'typed' | 'line';
 
-export const QUIZ_MODES: QuizMode[] = ['forward', 'reverse', 'typed'];
+export const QUIZ_MODES: QuizMode[] = ['forward', 'reverse', 'typed', 'line'];
 
 export type QuestionOrder = 'random' | 'weakest' | 'stale' | 'least-answered';
 
@@ -246,6 +246,7 @@ const DEFAULT_OPTION_COUNTS: Record<QuizMode, number> = {
   forward: 4,
   reverse: 9,
   typed: 1,
+  line: 1,
 };
 
 // Builds the question as it should be displayed in a quiz session: for
@@ -283,6 +284,20 @@ export function buildSessionQuestion(
       ...question,
       prompt: getActionDescription(question),
       options: [{ en: code, ru: code }],
+      correctAnswer: 0,
+    };
+  }
+
+  if (mode === 'line') {
+    const lineExample = question.lineExample;
+    if (!lineExample) {
+      return question;
+    }
+    const expectedLine = buildExpectedLineText(question);
+    return {
+      ...question,
+      prompt: lineExample.prompt,
+      options: [{ en: expectedLine, ru: expectedLine }],
       correctAnswer: 0,
     };
   }
@@ -482,6 +497,76 @@ export function isCorrectTypedAnswer(
 ): boolean {
   const code = getQuestionCode(question);
   return code !== null && normalizeCode(typedText) === normalizeCode(code);
+}
+
+// Matches a single G-code "word": an address letter followed by a numeric
+// value, e.g. "G81", "x10", "Z-12.5". Used to parse a free-typed code line
+// into its component words regardless of spacing or letter case.
+const CODE_WORD_PATTERN = /([A-Za-z])\s*(-?\d+(?:\.\d+)?)/g;
+
+type CodeWord = {
+  letter: string;
+  value: number;
+};
+
+function parseCodeLine(text: string): CodeWord[] {
+  return Array.from(text.matchAll(CODE_WORD_PATTERN), (match) => ({
+    letter: (match[1] as string).toUpperCase(),
+    value: Number(match[2]),
+  }));
+}
+
+// Builds the canonical text of a line-mode question's expected answer, e.g.
+// "G81 X10 Y5 Z-12 R2 F100", shown as feedback when the user gets it wrong.
+export function buildExpectedLineText(question: QuizQuestion): string {
+  const code = getQuestionCode(question);
+  const params = question.lineExample?.params ?? [];
+  return [code, ...params.map((param) => `${param.letter}${param.value}`)]
+    .filter((word): word is string => word !== null)
+    .join(' ');
+}
+
+// Validates a free-typed G/M-code line the way a real CNC controller would:
+// address letters are case-insensitive, numbers don't need leading zeros,
+// and the order of words on the line doesn't matter, since a controller
+// reads each word by its address letter rather than its position.
+export function isCorrectLineAnswer(
+  question: QuizQuestion,
+  typedText: string,
+): boolean {
+  const code = getQuestionCode(question);
+  const lineExample = question.lineExample;
+  if (!code || !lineExample) {
+    return false;
+  }
+
+  const words = parseCodeLine(typedText);
+  const codeLetter = code[0] as string;
+  const codeNumber = Number(code.slice(1));
+
+  const codeWords = words.filter((word) => word.letter === codeLetter);
+  if (codeWords.length !== 1 || codeWords[0]?.value !== codeNumber) {
+    return false;
+  }
+
+  const paramWords = words.filter((word) => word.letter !== codeLetter);
+  if (paramWords.length !== lineExample.params.length) {
+    return false;
+  }
+
+  const actualByLetter = new Map<string, number>();
+  for (const word of paramWords) {
+    if (actualByLetter.has(word.letter)) {
+      // A repeated address on one line isn't a valid word match.
+      return false;
+    }
+    actualByLetter.set(word.letter, word.value);
+  }
+
+  return lineExample.params.every((param) => {
+    const actual = actualByLetter.get(param.letter.toUpperCase());
+    return actual !== undefined && actual === Number(param.value);
+  });
 }
 
 export function computeQuestionStats(

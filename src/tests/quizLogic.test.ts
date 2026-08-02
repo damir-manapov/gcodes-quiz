@@ -3,6 +3,7 @@ import type { QuizQuestion } from '../data/questions';
 import {
   type AnswerHistoryRecord,
   areCodesClose,
+  buildExpectedLineText,
   buildSessionQuestion,
   computeHashCounts,
   computeOverallStats,
@@ -14,6 +15,7 @@ import {
   getQuestionCode,
   hashAnswerText,
   isCorrectAnswer,
+  isCorrectLineAnswer,
   isCorrectTypedAnswer,
   normalizeCode,
   orderQuestions,
@@ -524,6 +526,143 @@ describe('buildSessionQuestion (typed mode)', () => {
     expect(buildSessionQuestion(conceptual, pool, 'typed', noHistory)).toBe(
       conceptual,
     );
+  });
+});
+
+describe('buildSessionQuestion (line mode)', () => {
+  const questionWithLineExample: QuizQuestion = {
+    id: 24,
+    category: 'G',
+    topic: 'canned-cycle',
+    code: 'G81',
+    prompt: { en: 'What operation does G81 perform?', ru: 'В1' },
+    options: [{ en: 'Simple drilling cycle', ru: 'а' }],
+    correctAnswer: 0,
+    explanation: { en: 'exp', ru: 'оу' },
+    lineExample: {
+      prompt: { en: 'Drill a hole at X=10, Y=5.', ru: 'В2' },
+      params: [
+        { letter: 'X', value: '10' },
+        { letter: 'Y', value: '5' },
+      ],
+    },
+  };
+  const pool = [questionWithLineExample];
+  const noHistory = new Map<string, number>();
+
+  it('swaps the prompt for the worked example and the option for the expected line', () => {
+    const line = buildSessionQuestion(
+      questionWithLineExample,
+      pool,
+      'line',
+      noHistory,
+    );
+    expect(line.prompt).toEqual({ en: 'Drill a hole at X=10, Y=5.', ru: 'В2' });
+    expect(line.options).toEqual([{ en: 'G81 X10 Y5', ru: 'G81 X10 Y5' }]);
+    expect(line.correctAnswer).toBe(0);
+  });
+
+  it('returns the question unchanged when it has no line example', () => {
+    const conceptual: QuizQuestion = {
+      id: 25,
+      category: 'G',
+      topic: 'general',
+      code: 'G17',
+      prompt: { en: 'What is the purpose of a G code?', ru: 'В1' },
+      options: [{ en: 'a', ru: 'а' }],
+      correctAnswer: 0,
+      explanation: { en: 'exp', ru: 'оу' },
+    };
+    expect(buildSessionQuestion(conceptual, pool, 'line', noHistory)).toBe(
+      conceptual,
+    );
+  });
+});
+
+describe('buildExpectedLineText / isCorrectLineAnswer', () => {
+  const question: QuizQuestion = {
+    id: 24,
+    category: 'G',
+    topic: 'canned-cycle',
+    code: 'G81',
+    prompt: { en: 'What operation does G81 perform?', ru: 'В1' },
+    options: [{ en: 'Simple drilling cycle', ru: 'а' }],
+    correctAnswer: 0,
+    explanation: { en: 'exp', ru: 'оу' },
+    lineExample: {
+      prompt: { en: 'Drill a hole at X=10, Y=5.', ru: 'В2' },
+      params: [
+        { letter: 'X', value: '10' },
+        { letter: 'Y', value: '5' },
+        { letter: 'Z', value: '-12' },
+        { letter: 'R', value: '2' },
+        { letter: 'F', value: '100' },
+      ],
+    },
+  };
+
+  it('builds the canonical expected line text', () => {
+    expect(buildExpectedLineText(question)).toBe('G81 X10 Y5 Z-12 R2 F100');
+  });
+
+  it('accepts the exact expected line', () => {
+    expect(isCorrectLineAnswer(question, 'G81 X10 Y5 Z-12 R2 F100')).toBe(true);
+  });
+
+  it('is case-insensitive and tolerates dropped leading zeros', () => {
+    expect(isCorrectLineAnswer(question, 'g081 x010 y05 z-12 r02 f100')).toBe(
+      true,
+    );
+  });
+
+  it('does not care about the order of the words', () => {
+    expect(isCorrectLineAnswer(question, 'F100 R2 Z-12 Y5 X10 G81')).toBe(true);
+  });
+
+  it('tolerates extra or missing whitespace between address and value', () => {
+    expect(isCorrectLineAnswer(question, 'G81X10 Y5Z-12 R2 F100')).toBe(true);
+  });
+
+  it('rejects a line with a wrong parameter value', () => {
+    expect(isCorrectLineAnswer(question, 'G81 X10 Y5 Z-13 R2 F100')).toBe(
+      false,
+    );
+  });
+
+  it('rejects a line missing a required parameter', () => {
+    expect(isCorrectLineAnswer(question, 'G81 X10 Y5 Z-12 R2')).toBe(false);
+  });
+
+  it('rejects a line with an extra, unexpected parameter', () => {
+    expect(isCorrectLineAnswer(question, 'G81 X10 Y5 Z-12 R2 F100 S500')).toBe(
+      false,
+    );
+  });
+
+  it('rejects the wrong G/M code', () => {
+    expect(isCorrectLineAnswer(question, 'G82 X10 Y5 Z-12 R2 F100')).toBe(
+      false,
+    );
+  });
+
+  it('rejects a repeated address', () => {
+    expect(isCorrectLineAnswer(question, 'G81 X10 X10 Y5 Z-12 R2 F100')).toBe(
+      false,
+    );
+  });
+
+  it('returns false when the question has no line example', () => {
+    const conceptual: QuizQuestion = {
+      id: 26,
+      category: 'G',
+      topic: 'general',
+      code: 'G17',
+      prompt: { en: 'What is the purpose of a G code?', ru: 'В1' },
+      options: [{ en: 'a', ru: 'а' }],
+      correctAnswer: 0,
+      explanation: { en: 'exp', ru: 'оу' },
+    };
+    expect(isCorrectLineAnswer(conceptual, 'G17')).toBe(false);
   });
 });
 
