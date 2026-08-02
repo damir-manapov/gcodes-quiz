@@ -13,13 +13,27 @@ import {
   getNextQuestionIndex,
   getProgressPercent,
   getQuestionCode,
+  hashAnswerText,
   isCorrectAnswer,
+  isCorrectTypedAnswer,
+  normalizeCode,
   orderQuestions,
   type QuestionOrder,
   type QuizMode,
 } from '../data/quizLogic';
 import type { LocalizedText } from '../i18n';
 import { logError } from '../logger';
+
+// Reverse and typed modes both need a single identifiable code per
+// question, so those modes drop the handful of purely conceptual questions
+// that don't have one.
+function needsSingleCode(mode: QuizMode): boolean {
+  return mode === 'reverse' || mode === 'typed';
+}
+
+// Not a real option index (typed-mode answers aren't picked from a list),
+// just a sentinel so the answers table always has an integer to store.
+const TYPED_ANSWER_INDEX = -1;
 
 // Owns the quiz session lifecycle: loading/building a session's questions
 // for the current mode/order, tracking progress through it, and recording
@@ -29,6 +43,7 @@ export function useQuiz(questionOrder: QuestionOrder, quizMode: QuizMode) {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [typedAnswer, setTypedAnswer] = useState('');
   const [score, setScore] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -48,12 +63,12 @@ export function useQuiz(questionOrder: QuestionOrder, quizMode: QuizMode) {
             questionOrder,
             quizMode,
           );
-          // Reverse mode needs a single identifiable code per question, so
-          // drop the handful of purely conceptual questions that don't have one.
-          const eligible =
-            quizMode === 'reverse'
-              ? ordered.filter((question) => getQuestionCode(question) !== null)
-              : ordered;
+          // Reverse/typed modes need a single identifiable code per question,
+          // so drop the handful of purely conceptual questions that don't
+          // have one.
+          const eligible = needsSingleCode(quizMode)
+            ? ordered.filter((question) => getQuestionCode(question) !== null)
+            : ordered;
           // Weight each question's distractors by how often the user has
           // picked that specific wrong answer before, so frequent mistakes
           // are more likely to be offered again.
@@ -70,6 +85,7 @@ export function useQuiz(questionOrder: QuestionOrder, quizMode: QuizMode) {
           );
           setCurrentIndex(0);
           setSelectedAnswer(null);
+          setTypedAnswer('');
           setScore(0);
           setShowAnswer(false);
           setIsReady(true);
@@ -120,12 +136,34 @@ export function useQuiz(questionOrder: QuestionOrder, quizMode: QuizMode) {
     });
   };
 
+  const submitTypedAnswer = () => {
+    if (showAnswer || !currentQuestion || typedAnswer.trim() === '') {
+      return;
+    }
+    setShowAnswer(true);
+    const isCorrect = isCorrectTypedAnswer(currentQuestion, typedAnswer);
+    if (isCorrect) {
+      setScore((value) => value + 1);
+    }
+    const answerHash = hashAnswerText(normalizeCode(typedAnswer));
+    recordAnswer(
+      currentQuestion.id,
+      TYPED_ANSWER_INDEX,
+      isCorrect,
+      answerHash,
+      quizMode,
+    ).catch((error) => {
+      logError('Failed to persist answer', error);
+    });
+  };
+
   const nextQuestion = () => {
     if (!currentQuestion) {
       return;
     }
     setCurrentIndex(getNextQuestionIndex(currentIndex, questions.length));
     setSelectedAnswer(null);
+    setTypedAnswer('');
     setShowAnswer(false);
   };
 
@@ -134,6 +172,8 @@ export function useQuiz(questionOrder: QuestionOrder, quizMode: QuizMode) {
     currentIndex,
     currentQuestion,
     selectedAnswer,
+    typedAnswer,
+    setTypedAnswer,
     score,
     showAnswer,
     isReady,
@@ -141,6 +181,7 @@ export function useQuiz(questionOrder: QuestionOrder, quizMode: QuizMode) {
     progress,
     loadQuiz,
     submitAnswer,
+    submitTypedAnswer,
     nextQuestion,
   };
 }

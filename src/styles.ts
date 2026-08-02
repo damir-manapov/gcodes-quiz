@@ -142,6 +142,26 @@ export const styles = StyleSheet.create({
     color: '#0f172a',
     fontSize: 16,
   },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    backgroundColor: '#f8fafc',
+    fontSize: 16,
+    color: '#0f172a',
+  },
+  typedResultCorrect: {
+    color: '#16a34a',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  typedResultIncorrect: {
+    color: '#dc2626',
+    fontWeight: '700',
+    fontSize: 16,
+  },
   feedbackCard: {
     marginTop: 16,
     backgroundColor: '#eff6ff',

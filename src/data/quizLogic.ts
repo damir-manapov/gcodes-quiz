@@ -15,9 +15,9 @@ export type AnswerHistoryRecord = {
   mode: QuizMode | null;
 };
 
-export type QuizMode = 'forward' | 'reverse';
+export type QuizMode = 'forward' | 'reverse' | 'typed';
 
-export const QUIZ_MODES: QuizMode[] = ['forward', 'reverse'];
+export const QUIZ_MODES: QuizMode[] = ['forward', 'reverse', 'typed'];
 
 export type QuestionOrder = 'random' | 'weakest' | 'stale' | 'least-answered';
 
@@ -236,13 +236,16 @@ function buildReverseDistractorPool(
 // Builds the question as it should be displayed in a quiz session: for
 // forward mode, shuffles in extra distractors pooled from the rest of the
 // question bank; for reverse mode, turns the prompt into the description of
-// the action and the options into G/M codes. In both cases, every candidate
-// starts with a baseline weight (so a random code always has a chance),
-// which is then boosted for distractors the user has selected more often in
-// the past for this question, and, in reverse mode, for codes numerically
-// close to the correct one (e.g. G40/G42 as distractors for G41), since
-// those are the most plausible mix-ups. Reverse-mode questions with no
-// single identifiable code are returned unchanged.
+// the action and the options into G/M codes; for typed mode, does the same
+// but without building any multiple-choice options, since the user types
+// the code in free-hand instead of picking from a list. In the multiple-
+// choice modes, every candidate starts with a baseline weight (so a random
+// code always has a chance), which is then boosted for distractors the user
+// has selected more often in the past for this question, and, in reverse
+// mode, for codes numerically close to the correct one (e.g. G40/G42 as
+// distractors for G41), since those are the most plausible mix-ups. Reverse
+// and typed mode questions with no single identifiable code are returned
+// unchanged.
 export function buildSessionQuestion(
   question: QuizQuestion,
   allQuestions: QuizQuestion[],
@@ -255,6 +258,21 @@ export function buildSessionQuestion(
     1 +
     (hashCounts.get(`${question.id}:${candidate.hash}`) ?? 0) +
     (candidate.isClose ? CLOSE_CODE_WEIGHT_BONUS : 0);
+
+  if (mode === 'typed') {
+    const code = getQuestionCode(question);
+    if (!code) {
+      return question;
+    }
+    const description =
+      question.options[question.correctAnswer] ?? question.prompt;
+    return {
+      ...question,
+      prompt: description,
+      options: [{ en: code, ru: code }],
+      correctAnswer: 0,
+    };
+  }
 
   if (mode === 'reverse') {
     const code = getQuestionCode(question);
@@ -411,6 +429,20 @@ export function isCorrectAnswer(
   answerIndex: number,
 ): boolean {
   return answerIndex === question.correctAnswer;
+}
+
+// Trims and uppercases a typed code so minor formatting differences (extra
+// whitespace, lowercase letters) don't count against the user.
+export function normalizeCode(text: string): string {
+  return text.trim().toUpperCase();
+}
+
+export function isCorrectTypedAnswer(
+  question: QuizQuestion,
+  typedText: string,
+): boolean {
+  const code = getQuestionCode(question);
+  return code !== null && normalizeCode(typedText) === normalizeCode(code);
 }
 
 export function computeQuestionStats(

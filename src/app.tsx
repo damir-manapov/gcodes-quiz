@@ -24,6 +24,8 @@ export default function App() {
     currentIndex,
     currentQuestion,
     selectedAnswer,
+    typedAnswer,
+    setTypedAnswer,
     score,
     showAnswer,
     isReady,
@@ -31,6 +33,7 @@ export default function App() {
     progress,
     loadQuiz,
     submitAnswer,
+    submitTypedAnswer,
     nextQuestion,
   } = useQuiz(questionOrder, quizMode);
 
@@ -112,8 +115,11 @@ export default function App() {
               score={score}
               progress={progress}
               selectedAnswer={selectedAnswer}
+              typedAnswer={typedAnswer}
+              setTypedAnswer={setTypedAnswer}
               showAnswer={showAnswer}
               submitAnswer={submitAnswer}
+              submitTypedAnswer={submitTypedAnswer}
               nextQuestion={nextQuestion}
             />
           ) : null}

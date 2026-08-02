@@ -51,6 +51,7 @@ export function SettingsControls({
   const modeLabels: Record<QuizMode, string> = {
     forward: t.modeForward,
     reverse: t.modeReverse,
+    typed: t.modeTyped,
   };
 
   return (

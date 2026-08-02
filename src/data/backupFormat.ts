@@ -1,3 +1,5 @@
+import { QUIZ_MODES, type QuizMode } from './quizLogic';
+
 export type AnswersBackup = {
   exportedAt: string;
   answers: Array<{
@@ -7,7 +9,7 @@ export type AnswersBackup = {
     answeredAt: string;
     answerHash: string;
     // Absent on backups created before mode was tracked.
-    mode?: 'forward' | 'reverse';
+    mode?: QuizMode;
   }>;
 };
 
@@ -43,8 +45,7 @@ export function isAnswersBackup(value: unknown): value is AnswersBackup {
       typeof answer.answeredAt === 'string' &&
       typeof answer.answerHash === 'string' &&
       (answer.mode === undefined ||
-        answer.mode === 'forward' ||
-        answer.mode === 'reverse')
+        QUIZ_MODES.includes(answer.mode as QuizMode))
     );
   });
 }

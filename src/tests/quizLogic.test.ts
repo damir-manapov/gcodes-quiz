@@ -14,6 +14,8 @@ import {
   getQuestionCode,
   hashAnswerText,
   isCorrectAnswer,
+  isCorrectTypedAnswer,
+  normalizeCode,
   orderQuestions,
 } from '../data/quizLogic';
 
@@ -399,6 +401,72 @@ describe('toReverseQuestion (via buildSessionQuestion in reverse mode)', () => {
     expect(buildSessionQuestion(conceptual, pool, 'reverse', noHistory)).toBe(
       conceptual,
     );
+  });
+});
+
+describe('buildSessionQuestion (typed mode)', () => {
+  const pool: QuizQuestion[] = [
+    {
+      id: 20,
+      category: 'G',
+      topic: 'motion',
+      code: 'G00',
+      prompt: { en: 'What does G00 command do?', ru: 'В1' },
+      options: [{ en: 'Rapid positioning move', ru: 'а' }],
+      correctAnswer: 0,
+      explanation: { en: 'exp', ru: 'оу' },
+    },
+  ];
+  const noHistory = new Map<string, number>();
+
+  it('swaps the prompt for the description and reduces options to just the code', () => {
+    const target = pool[0] as QuizQuestion;
+    const typed = buildSessionQuestion(target, pool, 'typed', noHistory);
+    expect(typed.prompt).toEqual({ en: 'Rapid positioning move', ru: 'а' });
+    expect(typed.options).toEqual([{ en: 'G00', ru: 'G00' }]);
+    expect(typed.correctAnswer).toBe(0);
+  });
+
+  it('returns the question unchanged when no single code can be found', () => {
+    const conceptual: QuizQuestion = {
+      id: 23,
+      category: 'G',
+      topic: 'general',
+      prompt: { en: 'What is the purpose of a G code?', ru: 'В1' },
+      options: [{ en: 'a', ru: 'а' }],
+      correctAnswer: 0,
+      explanation: { en: 'exp', ru: 'оу' },
+    };
+    expect(buildSessionQuestion(conceptual, pool, 'typed', noHistory)).toBe(
+      conceptual,
+    );
+  });
+});
+
+describe('normalizeCode / isCorrectTypedAnswer', () => {
+  const question: QuizQuestion = {
+    id: 30,
+    category: 'G',
+    topic: 'tool-change',
+    code: 'G54',
+    prompt: { en: 'Select work coordinate system 1', ru: 'В1' },
+    options: [{ en: 'Select work coordinate system 1', ru: 'В1' }],
+    correctAnswer: 0,
+    explanation: { en: 'exp', ru: 'оу' },
+  };
+
+  it('is case- and whitespace-insensitive', () => {
+    expect(isCorrectTypedAnswer(question, 'g54')).toBe(true);
+    expect(isCorrectTypedAnswer(question, '  G54  ')).toBe(true);
+  });
+
+  it('rejects a wrong or empty code', () => {
+    expect(isCorrectTypedAnswer(question, 'G55')).toBe(false);
+    expect(isCorrectTypedAnswer(question, '')).toBe(false);
+  });
+
+  it('normalizes by trimming and uppercasing', () => {
+    expect(normalizeCode(' g54 ')).toBe('G54');
   });
 });
 

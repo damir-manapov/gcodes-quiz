@@ -1,7 +1,12 @@
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import type { QuizQuestion } from '../data/questions';
-import type { QuizMode } from '../data/quizLogic';
-import { type Language, localize, type UiStrings } from '../i18n';
+import { isCorrectTypedAnswer, type QuizMode } from '../data/quizLogic';
+import {
+  type Language,
+  type LocalizedText,
+  localize,
+  type UiStrings,
+} from '../i18n';
 import { styles } from '../styles';
 
 type Props = {
@@ -14,8 +19,11 @@ type Props = {
   score: number;
   progress: number;
   selectedAnswer: number | null;
+  typedAnswer: string;
+  setTypedAnswer: (value: string) => void;
   showAnswer: boolean;
   submitAnswer: (answerIndex: number) => void;
+  submitTypedAnswer: () => void;
   nextQuestion: () => void;
 };
 
@@ -29,10 +37,17 @@ export function QuizCard({
   score,
   progress,
   selectedAnswer,
+  typedAnswer,
+  setTypedAnswer,
   showAnswer,
   submitAnswer,
+  submitTypedAnswer,
   nextQuestion,
 }: Props) {
+  const isTyped = quizMode === 'typed';
+  const isTypedCorrect =
+    isTyped && showAnswer && isCorrectTypedAnswer(question, typedAnswer);
+
   return (
     <>
       <View style={styles.headerRow}>
@@ -49,36 +64,86 @@ export function QuizCard({
         {quizMode === 'reverse' ? (
           <Text style={styles.sectionLabel}>{t.reverseQuestionHint}</Text>
         ) : null}
+        {isTyped ? (
+          <Text style={styles.sectionLabel}>{t.typedQuestionHint}</Text>
+        ) : null}
         <Text style={styles.prompt}>{localize(question.prompt, language)}</Text>
-        {question.options.map((option, index) => {
-          const isCorrect = index === question.correctAnswer;
-          const isSelected = index === selectedAnswer;
-
-          const optionStyle = [
-            styles.optionButton,
-            showAnswer && isCorrect ? styles.correctOption : null,
-            showAnswer && isSelected && !isCorrect ? styles.wrongOption : null,
-            !showAnswer && isSelected ? styles.selectedOption : null,
-          ];
-
-          return (
-            <TouchableOpacity
-              key={option.en}
-              style={optionStyle}
-              onPress={() => submitAnswer(index)}
-              disabled={showAnswer}
-              accessibilityRole="button"
-              accessibilityState={{
-                selected: isSelected,
-                disabled: showAnswer,
-              }}
-            >
-              <Text style={styles.optionText}>
-                {localize(option, language)}
+        {isTyped ? (
+          <>
+            <TextInput
+              style={styles.textInput}
+              value={typedAnswer}
+              onChangeText={setTypedAnswer}
+              placeholder={t.typedAnswerPlaceholder}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              editable={!showAnswer}
+              onSubmitEditing={submitTypedAnswer}
+              accessibilityLabel={t.typedQuestionHint}
+            />
+            {showAnswer ? (
+              <Text
+                style={
+                  isTypedCorrect
+                    ? styles.typedResultCorrect
+                    : styles.typedResultIncorrect
+                }
+              >
+                {isTypedCorrect
+                  ? t.typedResultCorrect
+                  : t.typedResultIncorrect(
+                      localize(
+                        question.options[
+                          question.correctAnswer
+                        ] as LocalizedText,
+                        language,
+                      ),
+                    )}
               </Text>
-            </TouchableOpacity>
-          );
-        })}
+            ) : (
+              <TouchableOpacity
+                style={styles.nextButton}
+                onPress={submitTypedAnswer}
+                disabled={typedAnswer.trim() === ''}
+                accessibilityRole="button"
+              >
+                <Text style={styles.nextButtonText}>{t.submitTypedAnswer}</Text>
+              </TouchableOpacity>
+            )}
+          </>
+        ) : (
+          question.options.map((option, index) => {
+            const isCorrect = index === question.correctAnswer;
+            const isSelected = index === selectedAnswer;
+
+            const optionStyle = [
+              styles.optionButton,
+              showAnswer && isCorrect ? styles.correctOption : null,
+              showAnswer && isSelected && !isCorrect
+                ? styles.wrongOption
+                : null,
+              !showAnswer && isSelected ? styles.selectedOption : null,
+            ];
+
+            return (
+              <TouchableOpacity
+                key={option.en}
+                style={optionStyle}
+                onPress={() => submitAnswer(index)}
+                disabled={showAnswer}
+                accessibilityRole="button"
+                accessibilityState={{
+                  selected: isSelected,
+                  disabled: showAnswer,
+                }}
+              >
+                <Text style={styles.optionText}>
+                  {localize(option, language)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })
+        )}
       </View>
 
       {showAnswer ? (
