@@ -7,6 +7,7 @@ import {
   toBackupAnswer,
 } from './databaseMappers';
 import { getQuestionsForQuiz, type QuizQuestion } from './questions';
+import type { QuizMode } from './quizLogic';
 
 const DB_NAME = 'gcodes-quiz.db';
 
@@ -17,6 +18,8 @@ export type StoredAnswer = {
   isCorrect: boolean;
   answeredAt: string;
   answerHash: string;
+  // Null for answers recorded before mode was tracked.
+  mode: QuizMode | null;
 };
 
 export type { AnswersBackup } from './backupFormat';
@@ -71,6 +74,15 @@ const MIGRATIONS: Array<(db: SQLite.SQLiteDatabase) => Promise<void>> = [
     await db.execAsync(`
       DELETE FROM answers;
       ALTER TABLE answers ADD COLUMN answerHash TEXT NOT NULL DEFAULT '';
+    `);
+  },
+  async (db) => {
+    // Tracks which quiz mode an answer was given in, so ordering stats
+    // (weakest/stale/least-answered) can be computed separately per mode.
+    // Existing rows get NULL, meaning "mode unknown" - they're excluded from
+    // per-mode ordering stats going forward rather than guessed at.
+    await db.execAsync(`
+      ALTER TABLE answers ADD COLUMN mode TEXT;
     `);
   },
 ];
@@ -180,16 +192,18 @@ export async function recordAnswer(
   selectedAnswer: number,
   isCorrect: boolean,
   answerHash: string,
+  mode: QuizMode,
 ): Promise<void> {
   const db = await initializeDatabase();
   await db.runAsync(
-    'INSERT INTO answers (questionId, selectedAnswer, isCorrect, answeredAt, answerHash) VALUES (?, ?, ?, ?, ?)',
+    'INSERT INTO answers (questionId, selectedAnswer, isCorrect, answeredAt, answerHash, mode) VALUES (?, ?, ?, ?, ?, ?)',
     [
       questionId,
       selectedAnswer,
       isCorrect ? 1 : 0,
       new Date().toISOString(),
       answerHash,
+      mode,
     ],
   );
 }
@@ -203,8 +217,9 @@ export async function getStoredAnswers(): Promise<StoredAnswer[]> {
     isCorrect: number;
     answeredAt: string;
     answerHash: string;
+    mode: QuizMode | null;
   }>(
-    'SELECT id, questionId, selectedAnswer, isCorrect, answeredAt, answerHash FROM answers ORDER BY id ASC',
+    'SELECT id, questionId, selectedAnswer, isCorrect, answeredAt, answerHash, mode FROM answers ORDER BY id ASC',
   );
 
   return rows.map(mapAnswerRow);
@@ -226,13 +241,14 @@ export async function importAnswersBackup(
     // OR IGNORE skips rows that collide with the (questionId, answeredAt) unique
     // constraint, so re-importing the same backup is a safe no-op.
     await db.runAsync(
-      'INSERT OR IGNORE INTO answers (questionId, selectedAnswer, isCorrect, answeredAt, answerHash) VALUES (?, ?, ?, ?, ?)',
+      'INSERT OR IGNORE INTO answers (questionId, selectedAnswer, isCorrect, answeredAt, answerHash, mode) VALUES (?, ?, ?, ?, ?, ?)',
       [
         answer.questionId,
         answer.selectedAnswer,
         answer.isCorrect ? 1 : 0,
         answer.answeredAt,
         answer.answerHash,
+        answer.mode ?? null,
       ],
     );
   }

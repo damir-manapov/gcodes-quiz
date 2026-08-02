@@ -6,6 +6,8 @@ export type AnswersBackup = {
     isCorrect: boolean;
     answeredAt: string;
     answerHash: string;
+    // Absent on backups created before mode was tracked.
+    mode?: 'forward' | 'reverse';
   }>;
 };
 
@@ -39,7 +41,10 @@ export function isAnswersBackup(value: unknown): value is AnswersBackup {
       typeof answer.selectedAnswer === 'number' &&
       typeof answer.isCorrect === 'boolean' &&
       typeof answer.answeredAt === 'string' &&
-      typeof answer.answerHash === 'string'
+      typeof answer.answerHash === 'string' &&
+      (answer.mode === undefined ||
+        answer.mode === 'forward' ||
+        answer.mode === 'reverse')
     );
   });
 }

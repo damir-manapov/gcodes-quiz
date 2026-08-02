@@ -2,6 +2,7 @@ import type { LocalizedText } from '../i18n';
 import type { AnswersBackup } from './backupFormat';
 import type { StoredAnswer } from './database';
 import type { QuizCategory, QuizQuestion } from './questions';
+import type { QuizMode } from './quizLogic';
 
 export type QuestionRow = {
   id: number;
@@ -36,6 +37,7 @@ export type AnswerRow = {
   isCorrect: number;
   answeredAt: string;
   answerHash: string;
+  mode: QuizMode | null;
 };
 
 export function mapAnswerRow(row: AnswerRow): StoredAnswer {
@@ -46,6 +48,7 @@ export function mapAnswerRow(row: AnswerRow): StoredAnswer {
     isCorrect: row.isCorrect === 1,
     answeredAt: row.answeredAt,
     answerHash: row.answerHash,
+    mode: row.mode,
   };
 }
 
@@ -58,5 +61,6 @@ export function toBackupAnswer(
     isCorrect: answer.isCorrect,
     answeredAt: answer.answeredAt,
     answerHash: answer.answerHash,
+    ...(answer.mode ? { mode: answer.mode } : {}),
   };
 }

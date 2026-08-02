@@ -10,6 +10,9 @@ export type AnswerHistoryRecord = {
   questionId: number;
   isCorrect: boolean;
   answeredAt: string;
+  // Null for answers recorded before mode was tracked; such answers are
+  // excluded from per-mode ordering stats since their mode is unknown.
+  mode: QuizMode | null;
 };
 
 export type QuizMode = 'forward' | 'reverse';
@@ -311,18 +314,24 @@ type QuestionOrderStat = {
 // are treated as the longest overdue.
 const NEVER_ANSWERED = '';
 
+// Ordering stats are computed per quiz mode: a question you've mastered in
+// Code -> Meaning shouldn't be treated as "weak" or "recently answered" in
+// Action -> Code, since the two modes ask fundamentally different things.
 export function orderQuestions(
   questions: QuizQuestion[],
   answers: AnswerHistoryRecord[],
   order: QuestionOrder,
+  quizMode: QuizMode,
   random: () => number = Math.random,
 ): QuizQuestion[] {
   if (order === 'random') {
     return shuffle(questions, random);
   }
 
+  const relevantAnswers = answers.filter((answer) => answer.mode === quizMode);
+
   const statsByQuestion = new Map<number, QuestionOrderStat>();
-  for (const answer of answers) {
+  for (const answer of relevantAnswers) {
     const entry = statsByQuestion.get(answer.questionId) ?? {
       attempts: 0,
       correct: 0,

@@ -24,6 +24,7 @@ describe('backup format', () => {
           isCorrect: true,
           answeredAt: '2024-05-06T07:00:00.000Z',
           answerHash: 'abc123',
+          mode: 'forward' as const,
         },
       ],
     };
@@ -60,6 +61,41 @@ describe('backup format', () => {
             isCorrect: true,
             answeredAt: 'x',
             answerHash: 'abc',
+          },
+        ],
+      }),
+    ).toBe(false);
+  });
+
+  it('accepts answers without a mode field for backward compatibility with old backups', () => {
+    expect(
+      isAnswersBackup({
+        exportedAt: '2024-05-06T07:08:09.123Z',
+        answers: [
+          {
+            questionId: 1,
+            selectedAnswer: 0,
+            isCorrect: true,
+            answeredAt: '2024-05-06T07:00:00.000Z',
+            answerHash: 'abc',
+          },
+        ],
+      }),
+    ).toBe(true);
+  });
+
+  it('rejects an invalid mode value', () => {
+    expect(
+      isAnswersBackup({
+        exportedAt: '2024-05-06T07:08:09.123Z',
+        answers: [
+          {
+            questionId: 1,
+            selectedAnswer: 0,
+            isCorrect: true,
+            answeredAt: '2024-05-06T07:00:00.000Z',
+            answerHash: 'abc',
+            mode: 'sideways',
           },
         ],
       }),

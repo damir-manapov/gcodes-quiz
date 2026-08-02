@@ -147,7 +147,13 @@ describe('orderQuestions', () => {
   const orderingQuestions = [...questions, question3];
 
   it('keeps the same set of questions for a random order', () => {
-    const ordered = orderQuestions(orderingQuestions, [], 'random', () => 0);
+    const ordered = orderQuestions(
+      orderingQuestions,
+      [],
+      'random',
+      'forward',
+      () => 0,
+    );
     expect(ordered.map((q) => q.id).sort()).toEqual(
       orderingQuestions.map((q) => q.id).sort(),
     );
@@ -155,35 +161,126 @@ describe('orderQuestions', () => {
 
   it('orders by lowest accuracy first, with unattempted questions last', () => {
     const answers: AnswerHistoryRecord[] = [
-      { questionId: 1, isCorrect: true, answeredAt: '2024-01-01T00:00:00Z' },
-      { questionId: 1, isCorrect: false, answeredAt: '2024-01-02T00:00:00Z' },
-      { questionId: 2, isCorrect: false, answeredAt: '2024-01-01T00:00:00Z' },
+      {
+        questionId: 1,
+        isCorrect: true,
+        answeredAt: '2024-01-01T00:00:00Z',
+        mode: 'forward',
+      },
+      {
+        questionId: 1,
+        isCorrect: false,
+        answeredAt: '2024-01-02T00:00:00Z',
+        mode: 'forward',
+      },
+      {
+        questionId: 2,
+        isCorrect: false,
+        answeredAt: '2024-01-01T00:00:00Z',
+        mode: 'forward',
+      },
     ];
-    const ordered = orderQuestions(orderingQuestions, answers, 'weakest');
+    const ordered = orderQuestions(
+      orderingQuestions,
+      answers,
+      'weakest',
+      'forward',
+    );
     expect(ordered.map((q) => q.id)).toEqual([2, 1, 3]);
   });
 
   it('orders by fewest attempts first', () => {
     const answers: AnswerHistoryRecord[] = [
-      { questionId: 1, isCorrect: true, answeredAt: '2024-01-01T00:00:00Z' },
-      { questionId: 1, isCorrect: true, answeredAt: '2024-01-02T00:00:00Z' },
-      { questionId: 2, isCorrect: true, answeredAt: '2024-01-01T00:00:00Z' },
+      {
+        questionId: 1,
+        isCorrect: true,
+        answeredAt: '2024-01-01T00:00:00Z',
+        mode: 'forward',
+      },
+      {
+        questionId: 1,
+        isCorrect: true,
+        answeredAt: '2024-01-02T00:00:00Z',
+        mode: 'forward',
+      },
+      {
+        questionId: 2,
+        isCorrect: true,
+        answeredAt: '2024-01-01T00:00:00Z',
+        mode: 'forward',
+      },
     ];
     const ordered = orderQuestions(
       orderingQuestions,
       answers,
       'least-answered',
+      'forward',
     );
     expect(ordered.map((q) => q.id)).toEqual([3, 2, 1]);
   });
 
   it('orders never-answered and long-untouched questions first', () => {
     const answers: AnswerHistoryRecord[] = [
-      { questionId: 1, isCorrect: true, answeredAt: '2024-06-01T00:00:00Z' },
-      { questionId: 2, isCorrect: true, answeredAt: '2024-01-01T00:00:00Z' },
+      {
+        questionId: 1,
+        isCorrect: true,
+        answeredAt: '2024-06-01T00:00:00Z',
+        mode: 'forward',
+      },
+      {
+        questionId: 2,
+        isCorrect: true,
+        answeredAt: '2024-01-01T00:00:00Z',
+        mode: 'forward',
+      },
     ];
-    const ordered = orderQuestions(orderingQuestions, answers, 'stale');
+    const ordered = orderQuestions(
+      orderingQuestions,
+      answers,
+      'stale',
+      'forward',
+    );
     expect(ordered.map((q) => q.id)).toEqual([3, 2, 1]);
+  });
+
+  it("only counts a question's answers from the requested mode", () => {
+    // Question 1 is perfect in forward mode but has never been answered in
+    // reverse mode; question 2 is weak in reverse mode. Forward-mode
+    // ordering should be unaffected by the reverse-mode history and vice
+    // versa.
+    const answers: AnswerHistoryRecord[] = [
+      {
+        questionId: 1,
+        isCorrect: true,
+        answeredAt: '2024-01-01T00:00:00Z',
+        mode: 'forward',
+      },
+      {
+        questionId: 2,
+        isCorrect: false,
+        answeredAt: '2024-01-01T00:00:00Z',
+        mode: 'reverse',
+      },
+    ];
+    const forwardOrdered = orderQuestions(
+      orderingQuestions,
+      answers,
+      'weakest',
+      'forward',
+    );
+    // Question 1 has a perfect forward-mode record, question 2 has no
+    // forward-mode answers at all (unattempted questions sort last).
+    expect(forwardOrdered.map((q) => q.id)).toEqual([1, 2, 3]);
+
+    const reverseOrdered = orderQuestions(
+      orderingQuestions,
+      answers,
+      'weakest',
+      'reverse',
+    );
+    // Question 2's reverse-mode miss should surface first; question 1 has
+    // no reverse-mode answers.
+    expect(reverseOrdered.map((q) => q.id)).toEqual([2, 1, 3]);
   });
 });
 

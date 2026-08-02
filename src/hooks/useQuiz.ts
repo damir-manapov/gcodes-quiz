@@ -46,6 +46,7 @@ export function useQuiz(questionOrder: QuestionOrder, quizMode: QuizMode) {
             loadedQuestions,
             storedAnswers,
             questionOrder,
+            quizMode,
           );
           // Reverse mode needs a single identifiable code per question, so
           // drop the handful of purely conceptual questions that don't have one.
@@ -108,11 +109,15 @@ export function useQuiz(questionOrder: QuestionOrder, quizMode: QuizMode) {
     const answerHash = getAnswerHash(
       currentQuestion.options[answerIndex] as LocalizedText,
     );
-    recordAnswer(currentQuestion.id, answerIndex, isCorrect, answerHash).catch(
-      (error) => {
-        logError('Failed to persist answer', error);
-      },
-    );
+    recordAnswer(
+      currentQuestion.id,
+      answerIndex,
+      isCorrect,
+      answerHash,
+      quizMode,
+    ).catch((error) => {
+      logError('Failed to persist answer', error);
+    });
   };
 
   const nextQuestion = () => {
