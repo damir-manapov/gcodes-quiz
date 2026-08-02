@@ -75,6 +75,12 @@ export function getQuestionCode(question: QuizQuestion): string | null {
   return question.code ?? null;
 }
 
+// The description of what a code does, used as the prompt for reverse and
+// typed modes (falls back to the forward prompt if options are somehow empty).
+function getActionDescription(question: QuizQuestion): LocalizedText {
+  return question.options[question.correctAnswer] ?? question.prompt;
+}
+
 // Stable, non-cryptographic hash (FNV-1a, 32-bit) used to identify a piece
 // of answer text independent of its position in a shuffled option list or
 // which quiz session it appeared in. Not for security purposes.
@@ -273,11 +279,9 @@ export function buildSessionQuestion(
     if (!code) {
       return question;
     }
-    const description =
-      question.options[question.correctAnswer] ?? question.prompt;
     return {
       ...question,
-      prompt: description,
+      prompt: getActionDescription(question),
       options: [{ en: code, ru: code }],
       correctAnswer: 0,
     };
@@ -299,12 +303,10 @@ export function buildSessionQuestion(
     const correctAnswer = codeOptions.findIndex(
       (option) => option.hash === code,
     );
-    const description =
-      question.options[question.correctAnswer] ?? question.prompt;
 
     return {
       ...question,
-      prompt: description,
+      prompt: getActionDescription(question),
       options: codeOptions.map((option) => option.text),
       correctAnswer,
     };
