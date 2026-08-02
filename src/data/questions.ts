@@ -2274,6 +2274,93 @@ export const quizQuestions: QuizQuestion[] = [
       ru: 'G16 включает режим полярных координат, позволяя задавать последующие перемещения радиусом и углом относительно начала текущей системы координат вместо X/Y.',
     },
   },
+  {
+    id: 84,
+    category: 'G',
+    topic: 'compensation',
+    code: 'G44',
+    prompt: {
+      en: 'What does G44 apply?',
+      ru: 'Что применяет G44?',
+    },
+    options: [
+      {
+        en: 'Tool length compensation (negative)',
+        ru: 'Коррекцию на длину инструмента (отрицательную)',
+      },
+      {
+        en: 'Tool length compensation (positive)',
+        ru: 'Коррекцию на длину инструмента (положительную)',
+      },
+      {
+        en: 'Tool length compensation cancel',
+        ru: 'Отмену коррекции на длину инструмента',
+      },
+      { en: 'Cutter radius compensation', ru: 'Коррекцию на радиус фрезы' },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G44 applies negative tool length compensation, subtracting the H offset value instead of adding it like G43; it is less commonly used.',
+      ru: 'G44 применяет отрицательную коррекцию на длину инструмента, вычитая значение коррекции H вместо прибавления, как это делает G43; используется реже.',
+    },
+  },
+  {
+    id: 85,
+    category: 'G',
+    topic: 'motion',
+    code: 'G60',
+    prompt: {
+      en: 'What does G60 (unidirectional positioning) do?',
+      ru: 'Что делает G60 (однонаправленное позиционирование)?',
+    },
+    options: [
+      {
+        en: 'Always approaches the programmed position from the same direction to eliminate backlash',
+        ru: 'Всегда подходит к запрограммированной позиции с одного и того же направления, устраняя люфт',
+      },
+      {
+        en: 'Blends corners for smoother continuous motion',
+        ru: 'Сглаживает углы для более плавного непрерывного движения',
+      },
+      { en: 'Selects a canned cycle', ru: 'Выбирает постоянный цикл' },
+      {
+        en: 'Cancels cutter radius compensation',
+        ru: 'Отменяет коррекцию на радиус фрезы',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'G60 sets unidirectional positioning, always approaching the target from the same direction to cancel out backlash for precise positioning moves such as hole boring.',
+      ru: 'G60 включает однонаправленное позиционирование: станок всегда подходит к цели с одного направления, устраняя люфт для точного позиционирования, например при растачивании отверстий.',
+    },
+  },
+  {
+    id: 86,
+    category: 'M',
+    topic: 'canned-cycle',
+    code: 'M29',
+    prompt: {
+      en: 'What does M29 do?',
+      ru: 'Что делает M29?',
+    },
+    options: [
+      {
+        en: 'Enables rigid tapping mode, synchronizing spindle rotation with feed before a tapping cycle',
+        ru: 'Включает жёсткое нарезание резьбы, синхронизируя вращение шпинделя с подачей перед циклом нарезания резьбы',
+      },
+      { en: 'Cancels a canned cycle', ru: 'Отменяет постоянный цикл' },
+      { en: 'Calls a subprogram', ru: 'Вызывает подпрограмму' },
+      {
+        en: 'Starts the spindle clockwise',
+        ru: 'Запускает шпиндель по часовой стрелке',
+      },
+    ],
+    correctAnswer: 0,
+    explanation: {
+      en: 'M29 enables rigid tapping mode, locking the spindle to the feed axis so a tapping cycle like G84 can cut threads without a floating tap holder.',
+      ru: 'M29 включает режим жёсткого нарезания резьбы, синхронизируя шпиндель с осью подачи, чтобы цикл нарезания резьбы (например, G84) мог работать без плавающего патрона.',
+    },
+  },
 ];
 
 export function getQuestionsForQuiz(
