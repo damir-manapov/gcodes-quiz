@@ -1,9 +1,9 @@
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
-import type { QuizQuestion } from '../data/questions';
 import {
   isCorrectLineAnswer,
   isCorrectTypedAnswer,
   type QuizMode,
+  type SessionQuestion,
 } from '../data/quizLogic';
 import {
   type Language,
@@ -17,7 +17,7 @@ type Props = {
   t: UiStrings;
   language: Language;
   quizMode: QuizMode;
-  question: QuizQuestion;
+  question: SessionQuestion;
   currentIndex: number;
   totalQuestions: number;
   score: number;

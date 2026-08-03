@@ -1,6 +1,25 @@
 import type { LocalizedText } from '../i18n';
 import type { LineExample, QuizCategory, QuizQuestion } from './questions';
 
+// A question resolved for a single quiz session: one phrasing has been
+// picked from the bank's `prompts`/`correctAnswers` arrays, and (in
+// multiple-choice modes) a concrete, shuffled `options` list has been built
+// with `correctAnswer` as its index - computed here rather than stored in
+// the bank, so it can never drift out of sync with the option list.
+export type SessionQuestion = {
+  id: number;
+  category: QuizCategory;
+  topic: string;
+  code?: string;
+  prompt: LocalizedText;
+  options: LocalizedText[];
+  correctAnswer: number;
+  explanation: LocalizedText;
+  // The worked example picked for this session, read by
+  // `buildExpectedLineText`/`isCorrectLineAnswer`. Only present in line mode.
+  lineExample?: LineExample;
+};
+
 export type AnswerRecord = {
   questionId: number;
   isCorrect: boolean;
@@ -70,34 +89,27 @@ function shuffle<T>(items: T[], random: () => number): T[] {
 
 // Returns the single G/M code a question is about, used to build the
 // "action -> code" reverse quiz mode. Returns null when the question isn't
-// about one specific code (ineligible for reverse mode).
-export function getQuestionCode(question: QuizQuestion): string | null {
+// about one specific code (ineligible for reverse mode). Accepts both bank
+// and session questions, since both carry an optional `code`.
+export function getQuestionCode(question: { code?: string }): string | null {
   return question.code ?? null;
 }
 
 // The description of what a code does, used as the prompt for reverse and
-// typed modes (falls back to the forward prompt if options are somehow
-// empty). Picks randomly between the base text and any authored
-// `answerVariants` so the exact wording isn't memorized.
+// typed modes. Picks randomly among every authored phrasing of the correct
+// answer, so the exact wording isn't memorized.
 function getActionDescription(
   question: QuizQuestion,
   random: () => number,
 ): LocalizedText {
-  const base = question.options[question.correctAnswer] ?? question.prompt;
-  return pickVariant(base, question.answerVariants, random);
+  return pickOne(question.correctAnswers, random);
 }
 
-// Picks randomly between `base` and any entries in `variants`, so a
-// question's displayed wording differs from session to session instead of
-// always being the exact same memorizable string.
-function pickVariant(
-  base: LocalizedText,
-  variants: LocalizedText[] | undefined,
-  random: () => number,
-): LocalizedText {
-  const candidates =
-    variants && variants.length > 0 ? [base, ...variants] : [base];
-  return candidates[Math.floor(random() * candidates.length)] as LocalizedText;
+// Picks randomly among `items`, so a question's displayed wording differs
+// from session to session instead of always being the exact same
+// memorizable string.
+function pickOne<T>(items: T[], random: () => number): T {
+  return items[Math.floor(random() * items.length)] as T;
 }
 
 // Stable, non-cryptographic hash (FNV-1a, 32-bit) used to identify a piece
@@ -191,15 +203,19 @@ function weightedSample(
 }
 
 // Builds the pool of possible wrong-answer texts for a forward ("code ->
-// meaning") question: its own hand-authored wrong options, plus the correct
-// answer of every other question in the bank (each a real, plausible fact
-// about a different code), deduplicated by hash.
+// meaning") question: its own hand-authored distractors, plus the canonical
+// correct answer of every other question in the bank (each a real,
+// plausible fact about a different code), deduplicated by hash. Always uses
+// each question's first `correctAnswers` entry (never the later variant
+// phrasings) as its canonical identity, so which distractor a user has
+// picked before is recognized consistently across sessions regardless of
+// which phrasing is shown as the correct answer that session.
 function buildForwardDistractorPool(
   question: QuizQuestion,
   allQuestions: QuizQuestion[],
 ): DistractorCandidate[] {
   const correctHash = getAnswerHash(
-    question.options[question.correctAnswer] as LocalizedText,
+    question.correctAnswers[0] as LocalizedText,
   );
   const seen = new Set<string>([correctHash]);
   const pool: DistractorCandidate[] = [];
@@ -213,16 +229,14 @@ function buildForwardDistractorPool(
     pool.push({ hash, text });
   };
 
-  question.options.forEach((text, index) => {
-    if (index !== question.correctAnswer) {
-      add(text);
-    }
-  });
+  for (const text of question.distractors) {
+    add(text);
+  }
   for (const other of allQuestions) {
     if (other.id === question.id) {
       continue;
     }
-    add(other.options[other.correctAnswer] as LocalizedText);
+    add(other.correctAnswers[0] as LocalizedText);
   }
 
   return pool;
@@ -288,19 +302,27 @@ export function buildSessionQuestion(
   hashCounts: Map<string, number>,
   optionCount = DEFAULT_OPTION_COUNTS[mode],
   random: () => number = Math.random,
-): QuizQuestion {
+): SessionQuestion {
   const weightOf = (candidate: DistractorCandidate) =>
     1 +
     (hashCounts.get(`${question.id}:${candidate.hash}`) ?? 0) +
     (candidate.isClose ? CLOSE_CODE_WEIGHT_BONUS : 0);
 
+  const base = {
+    id: question.id,
+    category: question.category,
+    topic: question.topic,
+    ...(question.code ? { code: question.code } : {}),
+    explanation: question.explanation,
+  };
+
   if (mode === 'typed') {
     const code = getQuestionCode(question);
     if (!code) {
-      return question;
+      return toFallbackSessionQuestion(question);
     }
     return {
-      ...question,
+      ...base,
       prompt: getActionDescription(question, random),
       options: [{ en: code, ru: code }],
       correctAnswer: 0,
@@ -310,12 +332,12 @@ export function buildSessionQuestion(
   if (mode === 'line') {
     const lineExamples = question.lineExamples;
     if (!lineExamples || lineExamples.length === 0) {
-      return question;
+      return toFallbackSessionQuestion(question);
     }
     const lineExample = lineExamples[
       Math.floor(random() * lineExamples.length)
     ] as LineExample;
-    const sessionQuestion = { ...question, lineExample };
+    const sessionQuestion = { ...base, lineExample };
     const expectedLine = buildExpectedLineText(sessionQuestion);
     return {
       ...sessionQuestion,
@@ -328,7 +350,7 @@ export function buildSessionQuestion(
   if (mode === 'reverse') {
     const code = getQuestionCode(question);
     if (!code) {
-      return question;
+      return toFallbackSessionQuestion(question);
     }
 
     const pool = buildReverseDistractorPool(question, allQuestions, code);
@@ -343,7 +365,7 @@ export function buildSessionQuestion(
     );
 
     return {
-      ...question,
+      ...base,
       prompt: getActionDescription(question, random),
       options: codeOptions.map((option) => option.text),
       correctAnswer,
@@ -351,17 +373,13 @@ export function buildSessionQuestion(
   }
 
   const correctHash = getAnswerHash(
-    question.options[question.correctAnswer] as LocalizedText,
+    question.correctAnswers[0] as LocalizedText,
   );
   const pool = buildForwardDistractorPool(question, allQuestions);
   const distractors = weightedSample(pool, weightOf, optionCount - 1, random);
   const correctOption: DistractorCandidate = {
     hash: correctHash,
-    text: pickVariant(
-      question.options[question.correctAnswer] as LocalizedText,
-      question.answerVariants,
-      random,
-    ),
+    text: pickOne(question.correctAnswers, random),
   };
   const options = shuffle([correctOption, ...distractors], random);
   const correctAnswer = options.findIndex(
@@ -369,10 +387,32 @@ export function buildSessionQuestion(
   );
 
   return {
-    ...question,
-    prompt: pickVariant(question.prompt, question.promptVariants, random),
+    ...base,
+    prompt: pickOne(question.prompts, random),
     options: options.map((option) => option.text),
     correctAnswer,
+  };
+}
+
+// Degenerate forward-style session question used when a question isn't
+// eligible for the requested mode (e.g. no single code for reverse/typed, no
+// worked example for line mode). Not expected to be hit in normal use, since
+// callers filter eligibility before calling `buildSessionQuestion` (see
+// `useQuiz`'s `isEligibleForMode`), but kept as a safe fallback rather than
+// throwing.
+function toFallbackSessionQuestion(question: QuizQuestion): SessionQuestion {
+  return {
+    id: question.id,
+    category: question.category,
+    topic: question.topic,
+    ...(question.code ? { code: question.code } : {}),
+    explanation: question.explanation,
+    prompt: question.prompts[0] as LocalizedText,
+    options: [
+      question.correctAnswers[0] as LocalizedText,
+      ...question.distractors,
+    ],
+    correctAnswer: 0,
   };
 }
 
@@ -504,7 +544,7 @@ export function getNextQuestionIndex(
 }
 
 export function isCorrectAnswer(
-  question: QuizQuestion,
+  question: SessionQuestion,
   answerIndex: number,
 ): boolean {
   return answerIndex === question.correctAnswer;
@@ -520,7 +560,7 @@ export function normalizeCode(text: string): string {
 }
 
 export function isCorrectTypedAnswer(
-  question: QuizQuestion,
+  question: { code?: string },
   typedText: string,
 ): boolean {
   const code = getQuestionCode(question);
@@ -546,7 +586,10 @@ function parseCodeLine(text: string): CodeWord[] {
 
 // Builds the canonical text of a line-mode question's expected answer, e.g.
 // "G81 X10 Y5 Z-12 R2 F100", shown as feedback when the user gets it wrong.
-export function buildExpectedLineText(question: QuizQuestion): string {
+export function buildExpectedLineText(question: {
+  code?: string;
+  lineExample?: LineExample;
+}): string {
   const code = getQuestionCode(question);
   const params = question.lineExample?.params ?? [];
   return [code, ...params.map((param) => `${param.letter}${param.value}`)]
@@ -559,7 +602,7 @@ export function buildExpectedLineText(question: QuizQuestion): string {
 // and the order of words on the line doesn't matter, since a controller
 // reads each word by its address letter rather than its position.
 export function isCorrectLineAnswer(
-  question: QuizQuestion,
+  question: { code?: string; lineExample?: LineExample },
   typedText: string,
 ): boolean {
   const code = getQuestionCode(question);
@@ -598,7 +641,7 @@ export function isCorrectLineAnswer(
 }
 
 export function computeQuestionStats(
-  questions: QuizQuestion[],
+  questions: SessionQuestion[],
   answers: AnswerRecord[],
 ): QuestionStat[] {
   const byQuestion = new Map<number, { attempts: number; correct: number }>();
@@ -648,7 +691,7 @@ export function computeTopicStats(questionStats: QuestionStat[]): TopicStat[] {
 }
 
 export function computeOverallStats(
-  questions: QuizQuestion[],
+  questions: SessionQuestion[],
   answers: AnswerRecord[],
 ): OverallStats {
   const totalAttempts = answers.length;

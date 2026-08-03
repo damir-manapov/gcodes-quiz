@@ -1,12 +1,8 @@
 import * as SQLite from 'expo-sqlite';
 import type { Language } from '../i18n';
 import type { AnswersBackup } from './backupFormat';
-import {
-  mapAnswerRow,
-  mapQuestionRow,
-  toBackupAnswer,
-} from './databaseMappers';
-import { getQuestionsForQuiz, type QuizQuestion } from './questions';
+import { mapAnswerRow, toBackupAnswer } from './databaseMappers';
+import { getQuestionsForQuiz } from './questions';
 import type { QuizMode } from './quizLogic';
 
 const DB_NAME = 'gcodes-quiz.db';
@@ -116,6 +112,12 @@ export async function initializeDatabase() {
 
       const questions = getQuestionsForQuiz();
       for (const question of questions) {
+        // The bank stores every phrasing of the prompt/correct answer
+        // (`prompts`/`correctAnswers`) plus wrong-answer `distractors`; this
+        // table only exists so `answers.questionId` has something to
+        // reference (see the foreign key above), so it's seeded with each
+        // question's canonical (first) phrasing rather than every variant.
+        const options = [question.correctAnswers[0], ...question.distractors];
         await db.runAsync(
           `INSERT INTO questions (id, prompt, options, correctAnswer, explanation, category, topic, code)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -129,9 +131,9 @@ export async function initializeDatabase() {
              code = excluded.code`,
           [
             question.id,
-            JSON.stringify(question.prompt),
-            JSON.stringify(question.options),
-            question.correctAnswer,
+            JSON.stringify(question.prompts[0]),
+            JSON.stringify(options),
+            0,
             JSON.stringify(question.explanation),
             question.category,
             question.topic,
@@ -148,24 +150,6 @@ export async function initializeDatabase() {
   }
 
   return readyPromise;
-}
-
-export async function getStoredQuestions(): Promise<QuizQuestion[]> {
-  const db = await initializeDatabase();
-  const rows = await db.getAllAsync<{
-    id: number;
-    prompt: string;
-    options: string;
-    correctAnswer: number;
-    explanation: string;
-    category: 'G' | 'M';
-    topic: string;
-    code: string | null;
-  }>(
-    'SELECT id, prompt, options, correctAnswer, explanation, category, topic, code FROM questions ORDER BY id ASC',
-  );
-
-  return rows.map(mapQuestionRow);
 }
 
 const DEFAULT_LANGUAGE: Language = 'en';

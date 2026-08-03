@@ -1,16 +1,16 @@
 import { useMemo, useState } from 'react';
 import { getStoredAnswers } from '../data/database';
-import type { QuizQuestion } from '../data/questions';
 import {
   type AnswerRecord,
   computeOverallStats,
   computeQuestionStats,
   computeTopicStats,
   type QuestionStat,
+  type SessionQuestion,
 } from '../data/quizLogic';
 import { logError } from '../logger';
 
-export function useStats(questions: QuizQuestion[]) {
+export function useStats(questions: SessionQuestion[]) {
   const [view, setView] = useState<'quiz' | 'stats'>('quiz');
   const [answerRecords, setAnswerRecords] = useState<AnswerRecord[] | null>(
     null,

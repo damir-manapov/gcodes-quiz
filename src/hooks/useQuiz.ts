@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   getStoredAnswers,
-  getStoredQuestions,
   initializeDatabase,
   recordAnswer,
 } from '../data/database';
-import type { QuizQuestion } from '../data/questions';
+import { getQuestionsForQuiz, type QuizQuestion } from '../data/questions';
 import {
   buildSessionQuestion,
   computeHashCounts,
@@ -21,6 +20,7 @@ import {
   orderQuestions,
   type QuestionOrder,
   type QuizMode,
+  type SessionQuestion,
 } from '../data/quizLogic';
 import type { LocalizedText } from '../i18n';
 import { logError } from '../logger';
@@ -48,7 +48,7 @@ const TYPED_ANSWER_INDEX = -1;
 // answers. Reloads whenever order or mode changes (not the UI language,
 // which shouldn't discard in-progress quiz state).
 export function useQuiz(questionOrder: QuestionOrder, quizMode: QuizMode) {
-  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const [questions, setQuestions] = useState<SessionQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [typedAnswer, setTypedAnswer] = useState('');
@@ -62,9 +62,10 @@ export function useQuiz(questionOrder: QuestionOrder, quizMode: QuizMode) {
     setIsReady(false);
     setHasLoadError(false);
     initializeDatabase()
-      .then(() => Promise.all([getStoredQuestions(), getStoredAnswers()]))
-      .then(([loadedQuestions, storedAnswers]) => {
+      .then(() => getStoredAnswers())
+      .then((storedAnswers) => {
         if (isMounted) {
+          const loadedQuestions = getQuestionsForQuiz();
           const ordered = orderQuestions(
             loadedQuestions,
             storedAnswers,

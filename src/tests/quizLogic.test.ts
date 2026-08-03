@@ -19,9 +19,10 @@ import {
   isCorrectTypedAnswer,
   normalizeCode,
   orderQuestions,
+  type SessionQuestion,
 } from '../data/quizLogic';
 
-const questions: QuizQuestion[] = [
+const sessionQuestions: SessionQuestion[] = [
   {
     id: 1,
     category: 'G',
@@ -76,8 +77,12 @@ describe('getNextQuestionIndex', () => {
 
 describe('isCorrectAnswer', () => {
   it('matches the question correctAnswer index', () => {
-    expect(isCorrectAnswer(questions[0] as QuizQuestion, 1)).toBe(true);
-    expect(isCorrectAnswer(questions[0] as QuizQuestion, 0)).toBe(false);
+    expect(isCorrectAnswer(sessionQuestions[0] as SessionQuestion, 1)).toBe(
+      true,
+    );
+    expect(isCorrectAnswer(sessionQuestions[0] as SessionQuestion, 0)).toBe(
+      false,
+    );
   });
 });
 
@@ -89,7 +94,7 @@ describe('stats computation', () => {
   ];
 
   it('computes per-question stats', () => {
-    const stats = computeQuestionStats(questions, answers);
+    const stats = computeQuestionStats(sessionQuestions, answers);
     const q1 = stats.find((stat) => stat.questionId === 1);
     const q2 = stats.find((stat) => stat.questionId === 2);
     expect(q1).toMatchObject({ attempts: 2, correct: 1, accuracy: 50 });
@@ -97,14 +102,14 @@ describe('stats computation', () => {
   });
 
   it('includes unattempted questions with zero stats', () => {
-    const stats = computeQuestionStats(questions, []);
+    const stats = computeQuestionStats(sessionQuestions, []);
     expect(
       stats.every((stat) => stat.attempts === 0 && stat.accuracy === 0),
     ).toBe(true);
   });
 
   it('aggregates stats by topic', () => {
-    const stats = computeQuestionStats(questions, answers);
+    const stats = computeQuestionStats(sessionQuestions, answers);
     const topicStats = computeTopicStats(stats);
     const motion = topicStats.find((stat) => stat.topic === 'motion');
     const spindle = topicStats.find((stat) => stat.topic === 'spindle');
@@ -113,7 +118,7 @@ describe('stats computation', () => {
   });
 
   it('computes overall stats', () => {
-    const overall = computeOverallStats(questions, answers);
+    const overall = computeOverallStats(sessionQuestions, answers);
     expect(overall).toEqual({
       totalAttempts: 3,
       totalCorrect: 2,
@@ -124,7 +129,7 @@ describe('stats computation', () => {
   });
 
   it('handles no answers gracefully', () => {
-    const overall = computeOverallStats(questions, []);
+    const overall = computeOverallStats(sessionQuestions, []);
     expect(overall).toEqual({
       totalAttempts: 0,
       totalCorrect: 0,
@@ -136,19 +141,37 @@ describe('stats computation', () => {
 });
 
 describe('orderQuestions', () => {
+  const question1: QuizQuestion = {
+    id: 1,
+    category: 'G',
+    topic: 'motion',
+    prompts: [{ en: 'Q1', ru: 'В1' }],
+    distractors: [
+      { en: 'b', ru: 'б' },
+      { en: 'c', ru: 'в' },
+    ],
+    correctAnswers: [{ en: 'a', ru: 'а' }],
+    explanation: { en: 'exp1', ru: 'оу1' },
+  };
+  const question2: QuizQuestion = {
+    id: 2,
+    category: 'M',
+    topic: 'spindle',
+    prompts: [{ en: 'Q2', ru: 'В2' }],
+    distractors: [{ en: 'y', ru: 'у' }],
+    correctAnswers: [{ en: 'x', ru: 'х' }],
+    explanation: { en: 'exp2', ru: 'оу2' },
+  };
   const question3: QuizQuestion = {
     id: 3,
     category: 'G',
     topic: 'tool-change',
-    prompt: { en: 'Q3', ru: 'В3' },
-    options: [
-      { en: 'p', ru: 'п' },
-      { en: 'q', ru: 'к' },
-    ],
-    correctAnswer: 0,
+    prompts: [{ en: 'Q3', ru: 'В3' }],
+    distractors: [{ en: 'q', ru: 'к' }],
+    correctAnswers: [{ en: 'p', ru: 'п' }],
     explanation: { en: 'exp3', ru: 'оу3' },
   };
-  const orderingQuestions = [...questions, question3];
+  const orderingQuestions = [question1, question2, question3];
 
   it('keeps the same set of questions for a random order', () => {
     const ordered = orderQuestions(
@@ -358,9 +381,9 @@ describe('getQuestionCode', () => {
       category: 'M',
       topic: 'spindle',
       code: 'M05',
-      prompt: { en: 'Which command stops the spindle?', ru: 'В1' },
-      options: [{ en: 'M05', ru: 'M05' }],
-      correctAnswer: 0,
+      prompts: [{ en: 'Which command stops the spindle?', ru: 'В1' }],
+      distractors: [],
+      correctAnswers: [{ en: 'M05', ru: 'M05' }],
       explanation: { en: 'exp', ru: 'оу' },
     };
     expect(getQuestionCode(question)).toBe('M05');
@@ -371,9 +394,9 @@ describe('getQuestionCode', () => {
       id: 12,
       category: 'G',
       topic: 'general',
-      prompt: { en: 'What is the purpose of a G code?', ru: 'В1' },
-      options: [{ en: 'a', ru: 'а' }],
-      correctAnswer: 0,
+      prompts: [{ en: 'What is the purpose of a G code?', ru: 'В1' }],
+      distractors: [],
+      correctAnswers: [{ en: 'a', ru: 'а' }],
       explanation: { en: 'exp', ru: 'оу' },
     };
     expect(getQuestionCode(noCode)).toBeNull();
@@ -387,12 +410,9 @@ describe('toReverseQuestion (via buildSessionQuestion in reverse mode)', () => {
       category: 'G',
       topic: 'motion',
       code: 'G00',
-      prompt: { en: 'What does G00 command do?', ru: 'В1' },
-      options: [
-        { en: 'Rapid positioning move', ru: 'а' },
-        { en: 'Linear interpolation', ru: 'б' },
-      ],
-      correctAnswer: 0,
+      prompts: [{ en: 'What does G00 command do?', ru: 'В1' }],
+      distractors: [{ en: 'Linear interpolation', ru: 'б' }],
+      correctAnswers: [{ en: 'Rapid positioning move', ru: 'а' }],
       explanation: { en: 'exp', ru: 'оу' },
     },
     {
@@ -400,9 +420,9 @@ describe('toReverseQuestion (via buildSessionQuestion in reverse mode)', () => {
       category: 'G',
       topic: 'motion',
       code: 'G01',
-      prompt: { en: 'What does G01 command do?', ru: 'В2' },
-      options: [{ en: 'Linear interpolation', ru: 'б' }],
-      correctAnswer: 0,
+      prompts: [{ en: 'What does G01 command do?', ru: 'В2' }],
+      distractors: [],
+      correctAnswers: [{ en: 'Linear interpolation', ru: 'б' }],
       explanation: { en: 'exp', ru: 'оу' },
     },
     {
@@ -410,9 +430,9 @@ describe('toReverseQuestion (via buildSessionQuestion in reverse mode)', () => {
       category: 'M',
       topic: 'spindle',
       code: 'M03',
-      prompt: { en: 'What does M03 command do?', ru: 'В3' },
-      options: [{ en: 'Spindle clockwise', ru: 'в' }],
-      correctAnswer: 0,
+      prompts: [{ en: 'What does M03 command do?', ru: 'В3' }],
+      distractors: [],
+      correctAnswers: [{ en: 'Spindle clockwise', ru: 'в' }],
       explanation: { en: 'exp', ru: 'оу' },
     },
   ];
@@ -459,9 +479,9 @@ describe('toReverseQuestion (via buildSessionQuestion in reverse mode)', () => {
       category: 'G',
       topic: 'motion',
       code: `G${index}`,
-      prompt: { en: `What does G${index} do?`, ru: `Q${index}` },
-      options: [{ en: `does G${index} thing`, ru: `д${index}` }],
-      correctAnswer: 0,
+      prompts: [{ en: `What does G${index} do?`, ru: `Q${index}` }],
+      distractors: [],
+      correctAnswers: [{ en: `does G${index} thing`, ru: `д${index}` }],
       explanation: { en: 'exp', ru: 'оу' },
     }));
     const target = bigPool[0] as QuizQuestion;
@@ -479,14 +499,15 @@ describe('toReverseQuestion (via buildSessionQuestion in reverse mode)', () => {
       id: 23,
       category: 'G',
       topic: 'general',
-      prompt: { en: 'What is the purpose of a G code?', ru: 'В1' },
-      options: [{ en: 'a', ru: 'а' }],
-      correctAnswer: 0,
+      prompts: [{ en: 'What is the purpose of a G code?', ru: 'В1' }],
+      distractors: [],
+      correctAnswers: [{ en: 'a', ru: 'а' }],
       explanation: { en: 'exp', ru: 'оу' },
     };
-    expect(buildSessionQuestion(conceptual, pool, 'reverse', noHistory)).toBe(
-      conceptual,
-    );
+    const built = buildSessionQuestion(conceptual, pool, 'reverse', noHistory);
+    expect(built.prompt).toEqual(conceptual.prompts[0]);
+    expect(built.options).toEqual(conceptual.correctAnswers);
+    expect(built.correctAnswer).toBe(0);
   });
 });
 
@@ -497,9 +518,9 @@ describe('buildSessionQuestion (typed mode)', () => {
       category: 'G',
       topic: 'motion',
       code: 'G00',
-      prompt: { en: 'What does G00 command do?', ru: 'В1' },
-      options: [{ en: 'Rapid positioning move', ru: 'а' }],
-      correctAnswer: 0,
+      prompts: [{ en: 'What does G00 command do?', ru: 'В1' }],
+      distractors: [],
+      correctAnswers: [{ en: 'Rapid positioning move', ru: 'а' }],
       explanation: { en: 'exp', ru: 'оу' },
     },
   ];
@@ -518,14 +539,15 @@ describe('buildSessionQuestion (typed mode)', () => {
       id: 23,
       category: 'G',
       topic: 'general',
-      prompt: { en: 'What is the purpose of a G code?', ru: 'В1' },
-      options: [{ en: 'a', ru: 'а' }],
-      correctAnswer: 0,
+      prompts: [{ en: 'What is the purpose of a G code?', ru: 'В1' }],
+      distractors: [],
+      correctAnswers: [{ en: 'a', ru: 'а' }],
       explanation: { en: 'exp', ru: 'оу' },
     };
-    expect(buildSessionQuestion(conceptual, pool, 'typed', noHistory)).toBe(
-      conceptual,
-    );
+    const built = buildSessionQuestion(conceptual, pool, 'typed', noHistory);
+    expect(built.prompt).toEqual(conceptual.prompts[0]);
+    expect(built.options).toEqual(conceptual.correctAnswers);
+    expect(built.correctAnswer).toBe(0);
   });
 });
 
@@ -535,9 +557,9 @@ describe('buildSessionQuestion (line mode)', () => {
     category: 'G',
     topic: 'canned-cycle',
     code: 'G81',
-    prompt: { en: 'What operation does G81 perform?', ru: 'В1' },
-    options: [{ en: 'Simple drilling cycle', ru: 'а' }],
-    correctAnswer: 0,
+    prompts: [{ en: 'What operation does G81 perform?', ru: 'В1' }],
+    distractors: [],
+    correctAnswers: [{ en: 'Simple drilling cycle', ru: 'а' }],
     explanation: { en: 'exp', ru: 'оу' },
     lineExamples: [
       {
@@ -564,20 +586,21 @@ describe('buildSessionQuestion (line mode)', () => {
     expect(line.correctAnswer).toBe(0);
   });
 
-  it('returns the question unchanged when it has no line example', () => {
+  it('returns a fallback question when it has no line example', () => {
     const conceptual: QuizQuestion = {
       id: 25,
       category: 'G',
       topic: 'general',
       code: 'G17',
-      prompt: { en: 'What is the purpose of a G code?', ru: 'В1' },
-      options: [{ en: 'a', ru: 'а' }],
-      correctAnswer: 0,
+      prompts: [{ en: 'What is the purpose of a G code?', ru: 'В1' }],
+      distractors: [],
+      correctAnswers: [{ en: 'a', ru: 'а' }],
       explanation: { en: 'exp', ru: 'оу' },
     };
-    expect(buildSessionQuestion(conceptual, pool, 'line', noHistory)).toBe(
-      conceptual,
-    );
+    const built = buildSessionQuestion(conceptual, pool, 'line', noHistory);
+    expect(built.prompt).toEqual(conceptual.prompts[0]);
+    expect(built.options).toEqual(conceptual.correctAnswers);
+    expect(built.correctAnswer).toBe(0);
   });
 
   it('picks a random worked example when a code has more than one', () => {
@@ -625,15 +648,8 @@ describe('buildSessionQuestion (line mode)', () => {
 });
 
 describe('buildExpectedLineText / isCorrectLineAnswer', () => {
-  const question: QuizQuestion = {
-    id: 24,
-    category: 'G',
-    topic: 'canned-cycle',
+  const question = {
     code: 'G81',
-    prompt: { en: 'What operation does G81 perform?', ru: 'В1' },
-    options: [{ en: 'Simple drilling cycle', ru: 'а' }],
-    correctAnswer: 0,
-    explanation: { en: 'exp', ru: 'оу' },
     lineExample: {
       prompt: { en: 'Drill a hole at X=10, Y=5.', ru: 'В2' },
       params: [
@@ -697,31 +713,13 @@ describe('buildExpectedLineText / isCorrectLineAnswer', () => {
   });
 
   it('returns false when the question has no line example', () => {
-    const conceptual: QuizQuestion = {
-      id: 26,
-      category: 'G',
-      topic: 'general',
-      code: 'G17',
-      prompt: { en: 'What is the purpose of a G code?', ru: 'В1' },
-      options: [{ en: 'a', ru: 'а' }],
-      correctAnswer: 0,
-      explanation: { en: 'exp', ru: 'оу' },
-    };
+    const conceptual = { code: 'G17' };
     expect(isCorrectLineAnswer(conceptual, 'G17')).toBe(false);
   });
 });
 
 describe('normalizeCode / isCorrectTypedAnswer', () => {
-  const question: QuizQuestion = {
-    id: 30,
-    category: 'G',
-    topic: 'tool-change',
-    code: 'G54',
-    prompt: { en: 'Select work coordinate system 1', ru: 'В1' },
-    options: [{ en: 'Select work coordinate system 1', ru: 'В1' }],
-    correctAnswer: 0,
-    explanation: { en: 'exp', ru: 'оу' },
-  };
+  const question = { code: 'G54' };
 
   it('is case- and whitespace-insensitive', () => {
     expect(isCorrectTypedAnswer(question, 'g54')).toBe(true);
@@ -772,9 +770,9 @@ describe('reverse mode weights numerically "close" codes as distractors', () => 
     category: code.startsWith('G') ? 'G' : 'M',
     topic: 'motion',
     code,
-    prompt: { en: `What does ${code} do?`, ru: `Q ${code}` },
-    options: [{ en: code, ru: code }],
-    correctAnswer: 0,
+    prompts: [{ en: `What does ${code} do?`, ru: `Q ${code}` }],
+    distractors: [],
+    correctAnswers: [{ en: code, ru: code }],
     explanation: { en: 'exp', ru: 'оу' },
   });
 
@@ -835,24 +833,28 @@ describe('hashAnswerText / getAnswerHash', () => {
   });
 });
 
-describe('prompt/answer wording variants (pickVariant)', () => {
+describe('prompt/answer wording variety (multiple authored phrasings)', () => {
   const questionWithVariants: QuizQuestion = {
     id: 500,
     category: 'G',
     topic: 'motion',
-    prompt: { en: 'Base prompt', ru: 'Базовый вопрос' },
-    options: [{ en: 'Base answer', ru: 'Базовый ответ' }],
-    correctAnswer: 0,
+    prompts: [
+      { en: 'Base prompt', ru: 'Базовый вопрос' },
+      { en: 'Variant prompt', ru: 'Вариант вопроса' },
+    ],
+    distractors: [],
+    correctAnswers: [
+      { en: 'Base answer', ru: 'Базовый ответ' },
+      { en: 'Variant answer', ru: 'Вариант ответа' },
+    ],
     explanation: { en: 'exp', ru: 'оу' },
-    promptVariants: [{ en: 'Variant prompt', ru: 'Вариант вопроса' }],
-    answerVariants: [{ en: 'Variant answer', ru: 'Вариант ответа' }],
   };
   // Only one question in the pool, so the forward-mode distractor pool is
-  // empty and `random` is consumed solely by the variant picks below,
+  // empty and `random` is consumed solely by the phrasing picks below,
   // keeping this test deterministic.
   const soloPool = [questionWithVariants];
 
-  it('forward mode: uses the base prompt and answer when random selects index 0', () => {
+  it('forward mode: uses the first phrasing when random selects index 0', () => {
     const built = buildSessionQuestion(
       questionWithVariants,
       soloPool,
@@ -887,12 +889,12 @@ describe('prompt/answer wording variants (pickVariant)', () => {
     });
   });
 
-  it('forward mode: still works normally for questions with no authored variants', () => {
-    const {
-      promptVariants: _pv,
-      answerVariants: _av,
-      ...noVariants
-    } = questionWithVariants;
+  it('forward mode: still works normally for questions with only one authored phrasing', () => {
+    const noVariants: QuizQuestion = {
+      ...questionWithVariants,
+      prompts: [{ en: 'Base prompt', ru: 'Базовый вопрос' }],
+      correctAnswers: [{ en: 'Base answer', ru: 'Базовый ответ' }],
+    };
     const built = buildSessionQuestion(
       noVariants,
       [noVariants],
@@ -981,12 +983,9 @@ describe('buildSessionQuestion (forward mode)', () => {
     id: 1,
     category: 'G',
     topic: 'motion',
-    prompt: { en: 'What does G00 command do?', ru: 'В1' },
-    options: [
-      { en: 'Rapid positioning move', ru: 'а' },
-      { en: 'wrongA', ru: 'а' },
-    ],
-    correctAnswer: 0,
+    prompts: [{ en: 'What does G00 command do?', ru: 'В1' }],
+    distractors: [{ en: 'wrongA', ru: 'а' }],
+    correctAnswers: [{ en: 'Rapid positioning move', ru: 'а' }],
     explanation: { en: 'exp', ru: 'оу' },
   };
   const others: QuizQuestion[] = ['other1', 'other2', 'other3', 'other4'].map(
@@ -994,9 +993,9 @@ describe('buildSessionQuestion (forward mode)', () => {
       id: 100 + index,
       category: 'M',
       topic: 'misc',
-      prompt: { en: `prompt ${label}`, ru: `в ${label}` },
-      options: [{ en: label, ru: label }],
-      correctAnswer: 0,
+      prompts: [{ en: `prompt ${label}`, ru: `в ${label}` }],
+      distractors: [],
+      correctAnswers: [{ en: label, ru: label }],
       explanation: { en: 'exp', ru: 'оу' },
     }),
   );
@@ -1012,7 +1011,7 @@ describe('buildSessionQuestion (forward mode)', () => {
       () => 0,
     );
     expect(built.options[built.correctAnswer]).toEqual(
-      target.options[target.correctAnswer],
+      target.correctAnswers[0],
     );
     expect(built.options.length).toBe(4);
     const texts = built.options.map((option) => option.en);
