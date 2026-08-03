@@ -64,7 +64,7 @@ Requires `eas login` on first use.
 - src/styles.ts — shared `StyleSheet` used across components
 - src/logger.ts — `logError(context, error)` for reporting caught errors consistently
 - src/i18n.ts — language types, `localize()` helper, and English/Russian UI string dictionaries
-- src/data/questions.ts — quiz question definitions (with category/topic metadata and `{en, ru}` localized prompt/options/explanation)
+- src/data/questions.ts — quiz question bank (category/topic metadata, `{en, ru}` localized prompt/distractor/correct-answer wordings and explanation; multiple phrasings supported per question)
 - src/data/quizLogic.ts — pure shuffle, progress, adaptive-distractor, and stats computation logic (unit tested)
 - src/data/database.ts — local SQLite initialization, question loading, answer persistence, and language preference storage
 - src/data/databaseMappers.ts — pure row↔domain mapping functions used by database.ts (unit tested)

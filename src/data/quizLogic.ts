@@ -112,6 +112,13 @@ function pickOne<T>(items: T[], random: () => number): T {
   return items[Math.floor(random() * items.length)] as T;
 }
 
+// A question's canonical correct-answer phrasing, used as a stable identity
+// for hashing/dedup regardless of which variant is displayed that session.
+// `correctAnswers` is authored non-empty, hence the cast.
+function firstCorrectAnswer(question: QuizQuestion): LocalizedText {
+  return question.correctAnswers[0] as LocalizedText;
+}
+
 // Stable, non-cryptographic hash (FNV-1a, 32-bit) used to identify a piece
 // of answer text independent of its position in a shuffled option list or
 // which quiz session it appeared in. Not for security purposes.
@@ -214,9 +221,7 @@ function buildForwardDistractorPool(
   question: QuizQuestion,
   allQuestions: QuizQuestion[],
 ): DistractorCandidate[] {
-  const correctHash = getAnswerHash(
-    question.correctAnswers[0] as LocalizedText,
-  );
+  const correctHash = getAnswerHash(firstCorrectAnswer(question));
   const seen = new Set<string>([correctHash]);
   const pool: DistractorCandidate[] = [];
 
@@ -236,7 +241,7 @@ function buildForwardDistractorPool(
     if (other.id === question.id) {
       continue;
     }
-    add(other.correctAnswers[0] as LocalizedText);
+    add(firstCorrectAnswer(other));
   }
 
   return pool;
@@ -354,44 +359,58 @@ export function buildSessionQuestion(
     }
 
     const pool = buildReverseDistractorPool(question, allQuestions, code);
-    const distractors = weightedSample(pool, weightOf, optionCount - 1, random);
-    const correctOption: DistractorCandidate = {
-      hash: code,
-      text: { en: code, ru: code },
-    };
-    const codeOptions = shuffle([correctOption, ...distractors], random);
-    const correctAnswer = codeOptions.findIndex(
-      (option) => option.hash === code,
+    const { options, correctAnswer } = buildWeightedOptions(
+      { hash: code, text: { en: code, ru: code } },
+      pool,
+      weightOf,
+      optionCount,
+      random,
     );
 
     return {
       ...base,
       prompt: getActionDescription(question, random),
-      options: codeOptions.map((option) => option.text),
+      options,
       correctAnswer,
     };
   }
 
-  const correctHash = getAnswerHash(
-    question.correctAnswers[0] as LocalizedText,
-  );
   const pool = buildForwardDistractorPool(question, allQuestions);
-  const distractors = weightedSample(pool, weightOf, optionCount - 1, random);
-  const correctOption: DistractorCandidate = {
-    hash: correctHash,
-    text: pickOne(question.correctAnswers, random),
-  };
-  const options = shuffle([correctOption, ...distractors], random);
-  const correctAnswer = options.findIndex(
-    (option) => option.hash === correctHash,
+  const { options, correctAnswer } = buildWeightedOptions(
+    {
+      hash: getAnswerHash(firstCorrectAnswer(question)),
+      text: pickOne(question.correctAnswers, random),
+    },
+    pool,
+    weightOf,
+    optionCount,
+    random,
   );
 
   return {
     ...base,
     prompt: pickOne(question.prompts, random),
-    options: options.map((option) => option.text),
+    options,
     correctAnswer,
   };
+}
+
+// Shared by forward/reverse mode: samples weighted distractors to fill out
+// `optionCount` options alongside the correct one, shuffles them together,
+// and reports where the correct option landed.
+function buildWeightedOptions(
+  correctOption: DistractorCandidate,
+  pool: DistractorCandidate[],
+  weightOf: (candidate: DistractorCandidate) => number,
+  optionCount: number,
+  random: () => number,
+): { options: LocalizedText[]; correctAnswer: number } {
+  const distractors = weightedSample(pool, weightOf, optionCount - 1, random);
+  const shuffled = shuffle([correctOption, ...distractors], random);
+  const correctAnswer = shuffled.findIndex(
+    (option) => option.hash === correctOption.hash,
+  );
+  return { options: shuffled.map((option) => option.text), correctAnswer };
 }
 
 // Degenerate forward-style session question used when a question isn't
@@ -408,10 +427,7 @@ function toFallbackSessionQuestion(question: QuizQuestion): SessionQuestion {
     ...(question.code ? { code: question.code } : {}),
     explanation: question.explanation,
     prompt: question.prompts[0] as LocalizedText,
-    options: [
-      question.correctAnswers[0] as LocalizedText,
-      ...question.distractors,
-    ],
+    options: [firstCorrectAnswer(question), ...question.distractors],
     correctAnswer: 0,
   };
 }
