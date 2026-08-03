@@ -13,8 +13,10 @@ export function useBackup(t: UiStrings) {
     }
     setIsBackupBusy(true);
     try {
-      await exportAnswersToFile();
-      Alert.alert(t.backupReadyTitle, t.backupReadyMessage);
+      const fileUri = await exportAnswersToFile();
+      if (fileUri) {
+        Alert.alert(t.backupReadyTitle, t.backupReadyMessage);
+      }
     } catch (error) {
       logError('Backup failed', error);
       Alert.alert(t.backupFailedTitle, t.backupFailedMessage);

@@ -171,6 +171,30 @@ export async function setLanguage(language: Language): Promise<void> {
   );
 }
 
+// Persists the Android SAF directory the user picked to save backups into,
+// so subsequent backups can be written there directly without asking again.
+export async function getBackupDirectoryUri(): Promise<string | null> {
+  const db = await initializeDatabase();
+  const row = await db.getFirstAsync<{ value: string }>(
+    "SELECT value FROM preferences WHERE key = 'backupDirectoryUri'",
+  );
+  return row?.value ?? null;
+}
+
+export async function setBackupDirectoryUri(uri: string): Promise<void> {
+  const db = await initializeDatabase();
+  await db.runAsync(
+    `INSERT INTO preferences (key, value) VALUES ('backupDirectoryUri', ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [uri],
+  );
+}
+
+export async function clearBackupDirectoryUri(): Promise<void> {
+  const db = await initializeDatabase();
+  await db.runAsync("DELETE FROM preferences WHERE key = 'backupDirectoryUri'");
+}
+
 export async function recordAnswer(
   questionId: number,
   selectedAnswer: number,
