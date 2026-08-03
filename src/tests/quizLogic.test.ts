@@ -835,6 +835,132 @@ describe('hashAnswerText / getAnswerHash', () => {
   });
 });
 
+describe('prompt/answer wording variants (pickVariant)', () => {
+  const questionWithVariants: QuizQuestion = {
+    id: 500,
+    category: 'G',
+    topic: 'motion',
+    prompt: { en: 'Base prompt', ru: 'Базовый вопрос' },
+    options: [{ en: 'Base answer', ru: 'Базовый ответ' }],
+    correctAnswer: 0,
+    explanation: { en: 'exp', ru: 'оу' },
+    promptVariants: [{ en: 'Variant prompt', ru: 'Вариант вопроса' }],
+    answerVariants: [{ en: 'Variant answer', ru: 'Вариант ответа' }],
+  };
+  // Only one question in the pool, so the forward-mode distractor pool is
+  // empty and `random` is consumed solely by the variant picks below,
+  // keeping this test deterministic.
+  const soloPool = [questionWithVariants];
+
+  it('forward mode: uses the base prompt and answer when random selects index 0', () => {
+    const built = buildSessionQuestion(
+      questionWithVariants,
+      soloPool,
+      'forward',
+      new Map(),
+      1,
+      () => 0,
+    );
+    expect(built.prompt).toEqual({ en: 'Base prompt', ru: 'Базовый вопрос' });
+    expect(built.options[built.correctAnswer]).toEqual({
+      en: 'Base answer',
+      ru: 'Базовый ответ',
+    });
+  });
+
+  it('forward mode: uses the authored variant for prompt and answer when random selects the last index', () => {
+    const built = buildSessionQuestion(
+      questionWithVariants,
+      soloPool,
+      'forward',
+      new Map(),
+      1,
+      () => 0.99,
+    );
+    expect(built.prompt).toEqual({
+      en: 'Variant prompt',
+      ru: 'Вариант вопроса',
+    });
+    expect(built.options[built.correctAnswer]).toEqual({
+      en: 'Variant answer',
+      ru: 'Вариант ответа',
+    });
+  });
+
+  it('forward mode: still works normally for questions with no authored variants', () => {
+    const {
+      promptVariants: _pv,
+      answerVariants: _av,
+      ...noVariants
+    } = questionWithVariants;
+    const built = buildSessionQuestion(
+      noVariants,
+      [noVariants],
+      'forward',
+      new Map(),
+      1,
+      () => 0.99,
+    );
+    expect(built.prompt).toEqual({ en: 'Base prompt', ru: 'Базовый вопрос' });
+    expect(built.options[built.correctAnswer]).toEqual({
+      en: 'Base answer',
+      ru: 'Базовый ответ',
+    });
+  });
+
+  it('typed mode: picks the answer variant used as the action-description prompt', () => {
+    const withCode: QuizQuestion = { ...questionWithVariants, code: 'G500' };
+    const base = buildSessionQuestion(
+      withCode,
+      [withCode],
+      'typed',
+      new Map(),
+      1,
+      () => 0,
+    );
+    expect(base.prompt).toEqual({ en: 'Base answer', ru: 'Базовый ответ' });
+
+    const variant = buildSessionQuestion(
+      withCode,
+      [withCode],
+      'typed',
+      new Map(),
+      1,
+      () => 0.99,
+    );
+    expect(variant.prompt).toEqual({
+      en: 'Variant answer',
+      ru: 'Вариант ответа',
+    });
+  });
+
+  it('reverse mode: picks the answer variant used as the action-description prompt', () => {
+    const withCode: QuizQuestion = { ...questionWithVariants, code: 'G500' };
+    const base = buildSessionQuestion(
+      withCode,
+      [withCode],
+      'reverse',
+      new Map(),
+      1,
+      () => 0,
+    );
+    expect(base.prompt).toEqual({ en: 'Base answer', ru: 'Базовый ответ' });
+
+    const variant = buildSessionQuestion(
+      withCode,
+      [withCode],
+      'reverse',
+      new Map(),
+      1,
+      () => 0.99,
+    );
+    expect(variant.prompt).toEqual({
+      en: 'Variant answer',
+      ru: 'Вариант ответа',
+    });
+  });
+});
+
 describe('computeHashCounts', () => {
   it('tallies how many times each (questionId, answerHash) pair occurs', () => {
     const counts = computeHashCounts([

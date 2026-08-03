@@ -76,9 +76,28 @@ export function getQuestionCode(question: QuizQuestion): string | null {
 }
 
 // The description of what a code does, used as the prompt for reverse and
-// typed modes (falls back to the forward prompt if options are somehow empty).
-function getActionDescription(question: QuizQuestion): LocalizedText {
-  return question.options[question.correctAnswer] ?? question.prompt;
+// typed modes (falls back to the forward prompt if options are somehow
+// empty). Picks randomly between the base text and any authored
+// `answerVariants` so the exact wording isn't memorized.
+function getActionDescription(
+  question: QuizQuestion,
+  random: () => number,
+): LocalizedText {
+  const base = question.options[question.correctAnswer] ?? question.prompt;
+  return pickVariant(base, question.answerVariants, random);
+}
+
+// Picks randomly between `base` and any entries in `variants`, so a
+// question's displayed wording differs from session to session instead of
+// always being the exact same memorizable string.
+function pickVariant(
+  base: LocalizedText,
+  variants: LocalizedText[] | undefined,
+  random: () => number,
+): LocalizedText {
+  const candidates =
+    variants && variants.length > 0 ? [base, ...variants] : [base];
+  return candidates[Math.floor(random() * candidates.length)] as LocalizedText;
 }
 
 // Stable, non-cryptographic hash (FNV-1a, 32-bit) used to identify a piece
@@ -282,7 +301,7 @@ export function buildSessionQuestion(
     }
     return {
       ...question,
-      prompt: getActionDescription(question),
+      prompt: getActionDescription(question, random),
       options: [{ en: code, ru: code }],
       correctAnswer: 0,
     };
@@ -325,7 +344,7 @@ export function buildSessionQuestion(
 
     return {
       ...question,
-      prompt: getActionDescription(question),
+      prompt: getActionDescription(question, random),
       options: codeOptions.map((option) => option.text),
       correctAnswer,
     };
@@ -338,7 +357,11 @@ export function buildSessionQuestion(
   const distractors = weightedSample(pool, weightOf, optionCount - 1, random);
   const correctOption: DistractorCandidate = {
     hash: correctHash,
-    text: question.options[question.correctAnswer] as LocalizedText,
+    text: pickVariant(
+      question.options[question.correctAnswer] as LocalizedText,
+      question.answerVariants,
+      random,
+    ),
   };
   const options = shuffle([correctOption, ...distractors], random);
   const correctAnswer = options.findIndex(
@@ -347,6 +370,7 @@ export function buildSessionQuestion(
 
   return {
     ...question,
+    prompt: pickVariant(question.prompt, question.promptVariants, random),
     options: options.map((option) => option.text),
     correctAnswer,
   };
