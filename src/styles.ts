@@ -126,6 +126,9 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 14,
     backgroundColor: '#f8fafc',
   },
+  optionsList: {
+    gap: 10,
+  },
   optionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

@@ -129,7 +129,11 @@ export function QuizCard({
             )}
           </>
         ) : (
-          <View style={quizMode === 'reverse' ? styles.optionsGrid : null}>
+          <View
+            style={
+              quizMode === 'reverse' ? styles.optionsGrid : styles.optionsList
+            }
+          >
             {question.options.map((option, index) => {
               const isCorrect = index === question.correctAnswer;
               const isSelected = index === selectedAnswer;
